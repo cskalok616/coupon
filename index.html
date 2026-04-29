@@ -310,7 +310,7 @@
 		table {
 			width: 100%;
 			border-collapse: collapse;
-			min-width: 760px;
+			min-width: 620px;
 			font-size: 0.79rem;
 			table-layout: fixed;
 		}
@@ -328,28 +328,27 @@
 		}
 
 		th:nth-child(1),
-		td:nth-child(1) { width: 26px; }
+		td:nth-child(1) { width: 24px; }
 
 		th:nth-child(2),
-		td:nth-child(2) { width: 98px; }
+		td:nth-child(2) { width: 80px; }
 
 		th:nth-child(3),
-		td:nth-child(3) { width: 74px; }
-
-		th:nth-child(4),
+		td:nth-child(3),
 		td:nth-child(4),
-		th:nth-child(5),
+		th:nth-child(4),
 		td:nth-child(5),
+		th:nth-child(5),
+		td:nth-child(5) { width: 40px; }
+
 		th:nth-child(6),
-		td:nth-child(6) { width: 46px; }
+		td:nth-child(6) { width: 70px; }
 
 		th:nth-child(7),
-		td:nth-child(7),
-		th:nth-child(8),
-		td:nth-child(8) { width: 68px; }
+		td:nth-child(7) { width: 60px; }
 
-		th:nth-child(9),
-		td:nth-child(9) { width: 56px; }
+		th:nth-child(8),
+		td:nth-child(8) { width: 30px; }
 
 		th {
 			color: #2a4b68;
@@ -383,7 +382,7 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 2px;
-			font-size: 0.82rem;
+			font-size: 0.86rem;
 		}
 
 		.edit-inline-btn {
@@ -621,7 +620,6 @@
 						<tr>
 							<th>期數</th>
 							<th>支付渠道</th>
-							<th>新增日期</th>
 							<th>券一</th>
 							<th>券二</th>
 							<th>券三</th>
@@ -632,7 +630,7 @@
 					</thead>
 					<tbody id="recordBody">
 						<tr>
-							<td colspan="9">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td>
+							<td colspan="8">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td>
 						</tr>
 					</tbody>
 				</table>
@@ -660,7 +658,6 @@
 							<tr>
 								<th>期數</th>
 								<th>支付渠道</th>
-								<th>新增日期</th>
 								<th>券一</th>
 								<th>券二</th>
 								<th>券三</th>
@@ -671,7 +668,7 @@
 						</thead>
 						<tbody id="expiredRecordBody">
 							<tr>
-								<td colspan="9">目前沒有已過期的消費券。</td>
+								<td colspan="8">目前沒有已過期的消費券。</td>
 							</tr>
 						</tbody>
 					</table>
@@ -1042,7 +1039,7 @@
 			});
 
 			if (expiredRecords.length === 0) {
-				expiredRecordBody.innerHTML = "<tr><td colspan=\"9\">目前沒有已過期的消費券。</td></tr>";
+				expiredRecordBody.innerHTML = "<tr><td colspan=\"8\">目前沒有已過期的消費券。</td></tr>";
 				return;
 			}
 
@@ -1051,7 +1048,6 @@
 				return "<tr>"
 					+ "<td>" + record.phaseLabel + "</td>"
 					+ "<td>" + record.channel + "</td>"
-					+ "<td>" + record.createdDate + "</td>"
 					+ "<td>" + record.voucher1 + "</td>"
 					+ "<td>" + record.voucher2 + "</td>"
 					+ "<td>" + record.voucher3 + "</td>"
@@ -1064,7 +1060,7 @@
 
 		function renderRecords() {
 			if (records.length === 0) {
-				recordBody.innerHTML = "<tr><td colspan=\"9\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
+				recordBody.innerHTML = "<tr><td colspan=\"8\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
 				renderExpiredRecords();
 				listExpiryDate.textContent = "-";
 				listStatus.textContent = "-";
@@ -1079,7 +1075,6 @@
 				return "<tr>"
 					+ "<td>" + record.phaseLabel + "</td>"
 					+ "<td>" + record.channel + "</td>"
-					+ "<td>" + record.createdDate + "</td>"
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher1 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher1\" aria-label=\"修改券一金額\" title=\"修改券一金額\">&#9998;</button></div></td>"
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher2 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher2\" aria-label=\"修改券二金額\" title=\"修改券二金額\">&#9998;</button></div></td>"
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher3 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher3\" aria-label=\"修改券三金額\" title=\"修改券三金額\">&#9998;</button></div></td>"
