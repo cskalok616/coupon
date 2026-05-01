@@ -3,234 +3,298 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>記錄與計算 App</title>
+	<title>消費券記錄 App</title>
 	<style>
+		:root {
+			color-scheme: light;
+			--bg: #eef5fb;
+			--panel: #ffffff;
+			--panel-soft: #f8fcff;
+			--line: #d8e6f2;
+			--text: #10324f;
+			--muted: #5b7a92;
+			--brand: #1d6fd8;
+			--brand-2: #0d8f6f;
+			--danger: #d13f3f;
+			--shadow: 0 18px 38px rgba(16, 50, 79, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
 		body {
 			margin: 0;
-			font-family: "Noto Sans TC", "PingFang TC", sans-serif;
-			background: linear-gradient(135deg, #f2f7ff, #e7fff5);
-			min-height: 100vh;
-			display: grid;
-			place-items: center;
+			font-family: "PingFang TC", "Noto Sans TC", sans-serif;
+			background:
+				radial-gradient(circle at top right, rgba(29, 111, 216, 0.14), transparent 28%),
+				linear-gradient(180deg, #f6fbff 0%, var(--bg) 100%);
+			color: var(--text);
 		}
 
 		.app {
-			width: min(92vw, 720px);
-			background: #ffffff;
-			border-radius: 18px;
-			padding: 24px;
-			box-shadow: 0 14px 34px rgba(24, 42, 84, 0.16);
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 18px;
 		}
 
 		.banner-wrap {
-			margin-bottom: 12px;
-			border-radius: 14px;
-			overflow: hidden;
-			border: 1px solid #d6e8f7;
-			background: #f4f9ff;
+			position: relative;
+			margin-bottom: 16px;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			padding: 12px;
+			box-shadow: var(--shadow);
 		}
 
 		.banner-image {
-			display: block;
 			width: 100%;
-			height: auto;
+			height: 220px;
+			object-fit: cover;
+			border-radius: 14px;
+			display: block;
 		}
 
 		.banner-fallback {
 			display: none;
-			padding: 12px;
-			color: #567089;
-			font-size: 0.85rem;
+			padding: 36px 18px;
+			border-radius: 14px;
+			background: #eff6fd;
+			color: var(--muted);
 			text-align: center;
 		}
 
 		.stats-box {
-			margin-bottom: 14px;
-			padding: 14px;
-			border-radius: 14px;
-			background: linear-gradient(145deg, #eff8ff, #f3fffb);
-			border: 1px solid #d6e8f7;
+			margin-top: 12px;
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 10px;
 		}
 
 		.stat-item {
-			background: #ffffff;
-			border: 1px solid #deebf7;
-			border-radius: 10px;
-			padding: 10px;
+			padding: 14px;
+			background: var(--panel-soft);
+			border: 1px solid var(--line);
+			border-radius: 14px;
 		}
 
 		.stat-label {
 			display: block;
-			font-size: 0.85rem;
-			color: #4c6982;
+			font-size: 0.82rem;
+			color: var(--muted);
 			margin-bottom: 6px;
 		}
 
 		.stat-value {
-			display: block;
-			font-size: 1.05rem;
-			font-weight: 800;
-			color: #10324f;
+			font-size: 1.3rem;
+			font-weight: 700;
 		}
 
 		.topbar {
 			display: flex;
 			justify-content: space-between;
-			align-items: center;
+			align-items: flex-start;
 			gap: 12px;
-			position: relative;
+			margin-bottom: 14px;
+		}
+
+		.title-block {
+			display: grid;
+			gap: 8px;
 		}
 
 		h1 {
 			margin: 0;
-			font-size: 1.3rem;
-			color: #10324f;
+			font-size: 1.7rem;
+		}
+
+		.member-switcher-wrap {
+			display: grid;
+			gap: 6px;
+		}
+
+		.switcher-label {
+			font-size: 0.82rem;
+			font-weight: 700;
+			color: var(--muted);
+		}
+
+		.member-options {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.member-pill {
+			border: 1px solid #cfe0ee;
+			background: #f7fbff;
+			color: #1c4566;
+			padding: 6px 13px;
+			border-radius: 999px;
+			font-size: 0.86rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.member-pill.active {
+			border-color: var(--brand-2);
+			background: #daf6ee;
+			color: #0b634d;
+		}
+
+		.topbar-actions {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+			justify-content: flex-end;
+		}
+
+		.user-tag,
+		.view-tag {
+			font-size: 0.8rem;
+			font-weight: 700;
+			color: #18476b;
+			background: #e9f3ff;
+			border: 1px solid #c7ddf1;
+			padding: 6px 10px;
+			border-radius: 999px;
+		}
+
+		#logoutBtn,
+		#addBtn,
+		#finishBtn,
+		#cancelBtn,
+		.chooser-finish,
+		.delete-btn,
+		.expired-toggle-btn,
+		.login-submit {
+			font-family: inherit;
+		}
+
+		#logoutBtn {
+			border: 1px solid #cfdceb;
+			background: #f2f7ff;
+			color: #244968;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: 0.84rem;
+			font-weight: 700;
+			cursor: pointer;
+			display: none;
+		}
+
+		#logoutBtn.show {
+			display: inline-block;
 		}
 
 		#addBtn {
 			border: none;
-			background: #0d8f6f;
+			background: var(--brand-2);
 			color: #fff;
-			padding: 10px 16px;
+			padding: 9px 14px;
 			border-radius: 999px;
-			font-size: 0.95rem;
-			font-weight: 700;
-			cursor: pointer;
-		}
-
-		#addBtn:hover {
-			background: #0b775d;
-		}
-
-		.menu-panel {
-			position: absolute;
-			right: 0;
-			top: calc(100% + 12px);
-			width: min(86vw, 360px);
-			background: #ffffff;
-			border: 1px solid #d8e6f2;
-			border-radius: 14px;
-			box-shadow: 0 16px 30px rgba(16, 50, 79, 0.18);
-			padding: 12px;
-			display: none;
-			z-index: 20;
-		}
-
-		.menu-panel.show {
-			display: block;
-			animation: pop 180ms ease-out;
-		}
-
-		.menu-title {
-			margin: 4px 4px 10px;
-			font-size: 0.92rem;
-			color: #40627f;
-			font-weight: 700;
-		}
-
-		.menu-grid {
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 8px;
-		}
-
-		.option-btn {
-			border: 1px solid #cfe0ee;
-			background: #f7fbff;
-			color: #12304a;
-			padding: 10px 8px;
-			border-radius: 10px;
 			font-size: 0.9rem;
 			font-weight: 700;
 			cursor: pointer;
 		}
 
-		.option-btn:hover {
-			background: #edf6ff;
-			border-color: #8fb5d3;
-		}
-
-		.hint {
-			margin: 14px 2px 2px;
-			color: #5e7a92;
-			font-size: 0.9rem;
-		}
-
-		.voucher-panel {
-			margin-top: 14px;
-			padding: 12px;
-			border: 1px solid #d8e6f2;
-			border-radius: 12px;
-			background: #f8fcff;
-			display: none;
-		}
-
-		.voucher-panel.show {
-			display: block;
-		}
-
-		.finish-wrap {
-			margin-top: 12px;
-			display: none;
-			justify-content: flex-end;
-			gap: 8px;
-		}
-
-		.finish-wrap.show {
-			display: flex;
-		}
-
-		#finishBtn {
-			border: none;
-			background: #1d6fd8;
-			color: #ffffff;
-			padding: 10px 18px;
-			border-radius: 10px;
-			font-size: 0.9rem;
-			font-weight: 700;
-			cursor: pointer;
-		}
-
-		#finishBtn:disabled {
-			background: #a9bfdc;
+		#addBtn:disabled {
+			background: #95b8ad;
 			cursor: not-allowed;
 		}
 
-		#cancelBtn {
-			border: none;
-			background: #d13f3f;
-			color: #ffffff;
-			padding: 10px 18px;
+		.menu-panel {
+			display: none;
+			margin-bottom: 14px;
+			padding: 12px;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			box-shadow: var(--shadow);
+		}
+
+		.menu-panel.show,
+		.voucher-panel.show,
+		.finish-wrap.show,
+		.edit-chooser.show,
+		.expired-section.show {
+			display: block;
+		}
+
+		.option-grid,
+		.chooser-grid {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.option-btn,
+		.chooser-btn,
+		.value-btn {
+			border: 1px solid #cfe0ee;
+			background: #f7fbff;
+			color: #12304a;
+			padding: 8px 12px;
 			border-radius: 10px;
-			font-size: 0.9rem;
+			font-size: 0.86rem;
 			font-weight: 700;
 			cursor: pointer;
 		}
 
-		#cancelBtn:hover {
-			background: #b93434;
+		.option-btn:hover,
+		.chooser-btn:hover,
+		.value-btn:hover {
+			background: #edf6ff;
+		}
+
+		.chooser-btn.selected,
+		.value-btn.selected {
+			border-color: var(--brand-2);
+			background: #daf6ee;
+			color: #0b634d;
+		}
+
+		.voucher-panel,
+		.record-section,
+		.edit-chooser,
+		.expired-section {
+			display: none;
+			margin-bottom: 14px;
+			padding: 14px;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			box-shadow: var(--shadow);
+		}
+
+		.record-section {
+			display: block;
+		}
+
+		.panel-title,
+		.record-title {
+			margin: 0 0 12px;
+			font-size: 1rem;
 		}
 
 		.voucher-grid {
 			display: grid;
 			grid-template-columns: repeat(3, minmax(0, 1fr));
-			gap: 8px;
+			gap: 10px;
 		}
 
 		.voucher-card {
-			padding: 10px;
+			padding: 12px;
 			background: #ffffff;
 			border: 1px solid #deebf7;
-			border-radius: 10px;
+			border-radius: 12px;
 		}
 
 		.voucher-title {
 			margin: 0 0 10px;
 			text-align: center;
-			color: #10324f;
 			font-size: 1rem;
 		}
 
@@ -240,46 +304,45 @@
 			gap: 6px;
 		}
 
-		.value-btn {
-			border: 1px solid #cfe0ee;
-			background: #f7fbff;
-			color: #12304a;
-			padding: 7px 0;
-			border-radius: 8px;
-			font-size: 0.82rem;
+		.finish-wrap {
+			display: none;
+			margin-bottom: 14px;
+			text-align: right;
+		}
+
+		#finishBtn {
+			border: none;
+			background: var(--brand);
+			color: #ffffff;
+			padding: 10px 18px;
+			border-radius: 10px;
+			font-size: 0.9rem;
+			font-weight: 700;
+			cursor: pointer;
+			margin-left: 8px;
+		}
+
+		#finishBtn:disabled {
+			background: #a9bfdc;
+			cursor: not-allowed;
+		}
+
+		#cancelBtn {
+			border: none;
+			background: var(--danger);
+			color: #ffffff;
+			padding: 10px 18px;
+			border-radius: 10px;
+			font-size: 0.9rem;
 			font-weight: 700;
 			cursor: pointer;
 		}
 
-		.value-btn:hover {
-			background: #edf6ff;
-		}
-
-		.value-btn.selected {
-			border-color: #0d8f6f;
-			background: #daf6ee;
-			color: #0b634d;
-		}
-
-		.record-section {
-			margin-top: 16px;
-			padding: 12px;
-			border: 1px solid #d8e6f2;
-			border-radius: 12px;
-			background: #f8fcff;
-		}
-
-		.record-title {
-			margin: 0 0 10px;
-			font-size: 1rem;
-			color: #10324f;
-		}
-
 		.record-meta {
 			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 8px;
-			margin-bottom: 10px;
+			margin-bottom: 12px;
 		}
 
 		.meta-item {
@@ -292,7 +355,7 @@
 		.meta-label {
 			display: block;
 			font-size: 0.8rem;
-			color: #51708a;
+			color: var(--muted);
 			margin-bottom: 4px;
 		}
 
@@ -300,7 +363,26 @@
 			display: block;
 			font-size: 0.9rem;
 			font-weight: 700;
-			color: #10324f;
+		}
+
+		.hint {
+			margin: 0 0 12px;
+			font-size: 0.9rem;
+			color: var(--muted);
+		}
+
+		.readonly-note {
+			margin-bottom: 12px;
+			padding: 10px 12px;
+			border-radius: 10px;
+			background: #fff5da;
+			color: #7a5520;
+			font-size: 0.88rem;
+			display: none;
+		}
+
+		.readonly-note.show {
+			display: block;
 		}
 
 		.table-wrap {
@@ -310,151 +392,110 @@
 		table {
 			width: 100%;
 			border-collapse: collapse;
-			min-width: 620px;
-			font-size: 0.79rem;
-			table-layout: fixed;
+			min-width: 840px;
+			font-size: 0.82rem;
+			table-layout: auto;
+		}
+
+		.col-created-by {
+			width: 20px;
+		}
+
+		.col-phase {
+			width: 15px;
+		}
+
+		.col-channel {
+			width: 30px;
+		}
+
+		.col-voucher {
+			width: 10px;
+		}
+
+		.col-total {
+			width: 30px;
+		}
+
+		.col-spending-total {
+			width: 30px;
+		}
+
+		.col-action {
+			width: 20px;
 		}
 
 		th,
 		td {
-			border-bottom: 1px solid #d9e7f3;
-			padding: 5px 4px;
-			text-align: left;
-			white-space: nowrap;
+			padding: 7px 0;
+			border-bottom: 1px solid #e5eef7;
+			text-align: center;
+			color: #2a4b68;
 		}
 
-		tbody td {
-			font-size: 0.86rem;
+		table th:nth-child(2),
+		table td:nth-child(2) {
+			padding-right: 0;
 		}
 
-		th:nth-child(1),
-		td:nth-child(1) { width: 24px; }
+		table th:nth-child(3),
+		table td:nth-child(3) {
+			padding-left: 0;
+			padding-right: 0;
+		}
 
-		th:nth-child(2),
-		td:nth-child(2) { width: 80px; }
-
-		th:nth-child(3),
-		td:nth-child(3),
-		td:nth-child(4),
-		th:nth-child(4),
-		td:nth-child(5),
-		th:nth-child(5),
-		td:nth-child(5) { width: 40px; }
-
-		th:nth-child(6),
-		td:nth-child(6) { width: 70px; }
-
-		th:nth-child(7),
-		td:nth-child(7) { width: 60px; }
-
-		th:nth-child(8),
-		td:nth-child(8) { width: 30px; }
+		table th:nth-child(4),
+		table td:nth-child(4) {
+			padding-left: 0;
+		}
 
 		th {
-			color: #2a4b68;
+			background: #f3f8fd;
 			font-weight: 700;
-			font-size: 0.86rem;
-			background: #eef6fd;
-		}
-
-		.status-valid {
-			color: #0b775d;
-			font-weight: 700;
-		}
-
-		.status-expired {
-			color: #b14d4d;
-			font-weight: 700;
-		}
-
-		.delete-btn {
-			border: 1px solid #d7a3a3;
-			background: #fff5f5;
-			color: #9d3333;
-			padding: 2px 6px;
-			border-radius: 6px;
-			font-size: 0.7rem;
-			font-weight: 700;
-			cursor: pointer;
 		}
 
 		.amount-cell {
 			display: inline-flex;
 			align-items: center;
-			gap: 2px;
-			font-size: 0.86rem;
+			gap: 0;
+		}
+
+		.edit-inline-btn,
+		.delete-btn {
+			border: none;
+			padding: 6px 8px;
+			border-radius: 8px;
+			font-size: 0.8rem;
+			font-weight: 700;
+			cursor: pointer;
 		}
 
 		.edit-inline-btn {
-			border: 1px solid #a6bdd6;
-			background: #f2f8ff;
-			color: #2e5f8b;
-			width: 16px;
-			height: 16px;
-			padding: 0;
+			background: #eaf2ff;
+			color: var(--brand);
+			padding: 1px 2px;
+			font-size: 0.62rem;
 			border-radius: 4px;
-			font-size: 0.58rem;
 			line-height: 1;
-			font-weight: 700;
-			cursor: pointer;
 		}
 
-		.edit-chooser {
-			margin-top: 10px;
-			padding: 10px;
-			border: 1px solid #cfe0ee;
-			background: #ffffff;
-			border-radius: 10px;
-			display: none;
+		.delete-btn {
+			background: #ffe4e4;
+			color: #a12626;
 		}
 
-		.edit-chooser.show {
-			display: block;
+		button[disabled] {
+			opacity: 0.55;
+			cursor: not-allowed;
 		}
 
-		.chooser-title {
-			margin: 0 0 8px;
-			font-size: 0.88rem;
-			font-weight: 700;
-			color: #2a4b68;
-		}
-
-		.chooser-grid {
-			display: flex;
-			gap: 6px;
-			flex-wrap: wrap;
-		}
-
-		.chooser-btn {
-			border: 1px solid #cfe0ee;
-			background: #f7fbff;
-			color: #12304a;
-			padding: 6px 10px;
-			border-radius: 8px;
-			font-size: 0.8rem;
-			font-weight: 700;
-			cursor: pointer;
-		}
-
-		.chooser-btn.selected {
-			border-color: #0d8f6f;
-			background: #daf6ee;
-			color: #0b634d;
-		}
-
-		.chooser-finish {
-			border: none;
-			background: #1d6fd8;
-			color: #ffffff;
-			padding: 6px 12px;
-			border-radius: 8px;
-			font-size: 0.8rem;
-			font-weight: 700;
-			cursor: pointer;
+		.expired-section {
+			background: #fffaf1;
+			border-color: #ead9b8;
 		}
 
 		.expired-toggle-wrap {
-			margin-top: 14px;
+			margin-bottom: 14px;
 			display: flex;
 			justify-content: center;
 		}
@@ -470,143 +511,204 @@
 			cursor: pointer;
 		}
 
-		.expired-toggle-btn:hover {
-			background: #ffefd0;
+		.login-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(12, 28, 45, 0.56);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 16px;
+			z-index: 99;
 		}
 
-		.expired-section {
-			margin-top: 14px;
-			padding: 12px;
-			border: 1px solid #ead9b8;
-			border-radius: 12px;
-			background: #fffaf1;
-			display: none;
+		.login-card {
+			width: min(92vw, 420px);
+			background: #ffffff;
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			padding: 18px;
+			box-shadow: 0 16px 36px rgba(16, 50, 79, 0.28);
 		}
 
-		.expired-section.show {
-			display: block;
+		.login-title {
+			margin: 0 0 10px;
+			font-size: 1.1rem;
 		}
 
-		.expired-empty {
-			margin: 0;
-			color: #7c6846;
+		.login-form {
+			display: grid;
+			gap: 10px;
+		}
+
+		.login-input {
+			width: 100%;
+			border: 1px solid #cfe0ee;
+			border-radius: 10px;
+			padding: 10px 12px;
+			font-size: 0.92rem;
+		}
+
+		.login-submit {
+			border: none;
+			background: var(--brand);
+			color: #ffffff;
+			padding: 10px 14px;
+			border-radius: 10px;
 			font-size: 0.9rem;
+			font-weight: 700;
+			cursor: pointer;
 		}
 
-		@media (max-width: 620px) {
-			.stats-box {
-				grid-template-columns: 1fr;
+		.login-error {
+			min-height: 1.1em;
+			margin: 10px 0 0;
+			color: #b93636;
+			font-size: 0.84rem;
+		}
+
+		@media (max-width: 760px) {
+			.topbar {
+				flex-direction: column;
 			}
 
-			.record-meta {
-				grid-template-columns: 1fr;
+			.topbar-actions {
+				justify-content: flex-start;
 			}
 
+			.stats-box,
+			.record-meta,
 			.voucher-grid {
 				grid-template-columns: 1fr;
-			}
-		}
-
-		@keyframes pop {
-			from {
-				opacity: 0;
-				transform: translateY(-6px) scale(0.98);
-			}
-			to {
-				opacity: 1;
-				transform: translateY(0) scale(1);
 			}
 		}
 	</style>
 </head>
 <body>
+	<section id="loginOverlay" class="login-overlay" aria-label="登入面板">
+		<div class="login-card">
+			<h2 class="login-title">喂，登入左先喇</h2>
+			<form id="loginForm" class="login-form">
+				<input id="loginUser" class="login-input" type="text" placeholder="帳號" autocomplete="username" required />
+				<input id="loginPass" class="login-input" type="password" placeholder="密碼" autocomplete="current-password" required />
+				<button class="login-submit" type="submit">登入</button>
+			</form>
+			<p id="loginError" class="login-error"></p>
+		</div>
+	</section>
+
 	<main class="app">
 		<section class="banner-wrap" aria-label="活動橫幅">
-			<img
-				id="topBanner"
-				class="banner-image"
-				src="./banner.jpg"
-				alt="消費券活動橫幅"
-			/>
+			<img id="topBanner" class="banner-image" src="./banner.jpg" alt="消費券活動橫幅" />
 			<div id="bannerFallback" class="banner-fallback">找不到圖片，請將橫幅檔案命名為 banner.jpg 並放在同一資料夾。</div>
-		</section>
-
-		<section class="stats-box" aria-label="統計資訊">
-			<div class="stat-item">
-				<span class="stat-label">剩餘消費券金額</span>
-				<strong class="stat-value" id="voucherLeft">MOP 0</strong>
-			</div>
-			<div class="stat-item">
-				<span class="stat-label">總消費額</span>
-				<strong class="stat-value" id="totalSpend">MOP 0</strong>
+			<div class="stats-box">
+				<div class="stat-item">
+					<span class="stat-label">剩餘消費券金額</span>
+					<strong class="stat-value" id="voucherLeft">MOP 0</strong>
+				</div>
+				<div class="stat-item">
+					<span class="stat-label">總消費額</span>
+					<strong class="stat-value" id="totalSpend">MOP 0</strong>
+				</div>
 			</div>
 		</section>
 
 		<div class="topbar">
-			<h1>我抽到的消費券</h1>
-			<button id="addBtn" type="button" aria-expanded="false" aria-controls="menuPanel">新增</button>
-			<section id="menuPanel" class="menu-panel" aria-label="支付渠道選項">
-				<p class="menu-title">請選擇支付渠道</p>
-				<div class="menu-grid">
-					<button class="option-btn" type="button">澳門通 Mpay</button>
-					<button class="option-btn" type="button">中銀</button>
-					<button class="option-btn" type="button">支付寶(澳門)</button>
-					<button class="option-btn" type="button">國際銀行</button>
-					<button class="option-btn" type="button">工商銀行</button>
-					<button class="option-btn" type="button">UePay</button>
-					<button class="option-btn" type="button">大豐 豐付寶</button>
-					<button class="option-btn" type="button">廣發錢包</button>
+			<div class="title-block">
+				<h1>我抽到的消費券</h1>
+				<div class="member-switcher-wrap">
+					<span class="switcher-label">登入帳號群</span>
+					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
+						<button class="member-pill" type="button" data-user="樂">樂</button>
+						<button class="member-pill" type="button" data-user="珊">珊</button>
+						<button class="member-pill" type="button" data-user="旭">旭</button>
+						<button class="member-pill" type="button" data-user="苑">苑</button>
+						<button class="member-pill" type="button" data-user="澤">澤</button>
+						<button class="member-pill" type="button" data-user="瑩">瑩</button>
+						<button class="member-pill" type="button" data-user="婆">婆</button>
+						<button class="member-pill" type="button" data-user="影">影</button>
+						<button class="member-pill" type="button" data-user="富">富</button>
+						<button class="member-pill" type="button" data-user="妍">妍</button>
+						<button class="member-pill" type="button" data-user="玥">玥</button>
+					</div>
 				</div>
-			</section>
-		</div>
-		<p class="hint" id="hint">點擊右上角新增，開啟 8 個支付渠道。</p>
-		<section class="voucher-panel" id="voucherPanel" aria-label="券標題">
-			<div class="voucher-grid">
-				<section class="voucher-card" data-voucher="券一">
-					<h2 class="voucher-title">券一</h2>
-					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="無">無</button>
-						<button class="value-btn" type="button" data-value="10">10</button>
-						<button class="value-btn" type="button" data-value="20">20</button>
-						<button class="value-btn" type="button" data-value="50">50</button>
-						<button class="value-btn" type="button" data-value="100">100</button>
-						<button class="value-btn" type="button" data-value="200">200</button>
-					</div>
-				</section>
-				<section class="voucher-card" data-voucher="券二">
-					<h2 class="voucher-title">券二</h2>
-					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="無">無</button>
-						<button class="value-btn" type="button" data-value="10">10</button>
-						<button class="value-btn" type="button" data-value="20">20</button>
-						<button class="value-btn" type="button" data-value="50">50</button>
-						<button class="value-btn" type="button" data-value="100">100</button>
-						<button class="value-btn" type="button" data-value="200">200</button>
-					</div>
-				</section>
-				<section class="voucher-card" data-voucher="券三">
-					<h2 class="voucher-title">券三</h2>
-					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="無">無</button>
-						<button class="value-btn" type="button" data-value="10">10</button>
-						<button class="value-btn" type="button" data-value="20">20</button>
-						<button class="value-btn" type="button" data-value="50">50</button>
-						<button class="value-btn" type="button" data-value="100">100</button>
-						<button class="value-btn" type="button" data-value="200">200</button>
-					</div>
-				</section>
 			</div>
-			<div class="finish-wrap" id="finishWrap">
-				<button id="cancelBtn" type="button">取消</button>
-				<button id="finishBtn" type="button" disabled>完成</button>
+			<div class="topbar-actions">
+				<span id="currentViewTag" class="view-tag">目前檢視：樂</span>
+				<span id="currentUserTag" class="user-tag">未登入</span>
+				<button id="logoutBtn" type="button">登出</button>
+				<button id="addBtn" type="button" aria-expanded="false" aria-controls="menuPanel">新增</button>
+			</div>
+		</div>
+
+		<section id="menuPanel" class="menu-panel" aria-label="支付渠道選項">
+			<div class="option-grid">
+				<button class="option-btn" type="button">澳門通 Mpay</button>
+				<button class="option-btn" type="button">中國銀行</button>
+				<button class="option-btn" type="button">支付寶(澳門)</button>
+				<button class="option-btn" type="button">國際銀行</button>
+				<button class="option-btn" type="button">工商銀行</button>
+				<button class="option-btn" type="button">UePay</button>
+				<button class="option-btn" type="button">大豐 豐付寶</button>
+				<button class="option-btn" type="button">廣發錢包</button>
 			</div>
 		</section>
 
-		<section class="record-section" id="recordSection" aria-label="記錄列表">
+		<section id="voucherPanel" class="voucher-panel">
+			<h2 class="panel-title">設定本次消費券金額</h2>
+			<div class="voucher-grid">
+				<div class="voucher-card" data-voucher="券一">
+					<h3 class="voucher-title">券一</h3>
+					<div class="value-grid">
+						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="10">10</button>
+						<button class="value-btn" type="button" data-value="20">20</button>
+						<button class="value-btn" type="button" data-value="50">50</button>
+						<button class="value-btn" type="button" data-value="100">100</button>
+						<button class="value-btn" type="button" data-value="200">200</button>
+					</div>
+				</div>
+				<div class="voucher-card" data-voucher="券二">
+					<h3 class="voucher-title">券二</h3>
+					<div class="value-grid">
+						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="10">10</button>
+						<button class="value-btn" type="button" data-value="20">20</button>
+						<button class="value-btn" type="button" data-value="50">50</button>
+						<button class="value-btn" type="button" data-value="100">100</button>
+						<button class="value-btn" type="button" data-value="200">200</button>
+					</div>
+				</div>
+				<div class="voucher-card" data-voucher="券三">
+					<h3 class="voucher-title">券三</h3>
+					<div class="value-grid">
+						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="10">10</button>
+						<button class="value-btn" type="button" data-value="20">20</button>
+						<button class="value-btn" type="button" data-value="50">50</button>
+						<button class="value-btn" type="button" data-value="100">100</button>
+						<button class="value-btn" type="button" data-value="200">200</button>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<div id="finishWrap" class="finish-wrap">
+			<button id="cancelBtn" type="button">取消</button>
+			<button id="finishBtn" type="button" disabled>完成</button>
+		</div>
+
+		<section class="record-section">
 			<h2 class="record-title">記錄列表</h2>
-			<div class="record-meta" aria-label="記錄狀態資訊">
+			<p id="hint" class="hint">請先登入後再操作。</p>
+			<div id="readonlyNote" class="readonly-note">目前正在查看其他帳號的列表，你只能檢視，不能修改或刪除。</div>
+			<div class="record-meta">
 				<div class="meta-item">
-					<span class="meta-label">過期日</span>
+					<span class="meta-label">目前檢視帳號</span>
+					<strong id="listOwner" class="meta-value">樂</strong>
+				</div>
+				<div class="meta-item">
+					<span class="meta-label">最近到期日</span>
 					<strong id="listExpiryDate" class="meta-value">-</strong>
 				</div>
 				<div class="meta-item">
@@ -616,155 +718,316 @@
 			</div>
 			<div class="table-wrap">
 				<table>
+					<colgroup>
+						<col class="col-created-by" />
+						<col class="col-phase" />
+						<col class="col-channel" />
+						<col class="col-voucher" />
+						<col class="col-voucher" />
+						<col class="col-voucher" />
+						<col class="col-total" />
+						<col class="col-spending-total" />
+						<col class="col-action" />
+					</colgroup>
 					<thead>
 						<tr>
+							<th>建立者</th>
 							<th>期數</th>
-							<th>支付渠道</th>
+							<th>渠道</th>
 							<th>券一</th>
 							<th>券二</th>
 							<th>券三</th>
-							<th>消費券總額</th>
+							<th>券總額</th>
 							<th>總消費額</th>
 							<th>操作</th>
 						</tr>
 					</thead>
-					<tbody id="recordBody">
-						<tr>
-							<td colspan="8">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td>
-						</tr>
-					</tbody>
+					<tbody id="recordBody"></tbody>
 				</table>
 			</div>
-			<section id="editChooser" class="edit-chooser" aria-label="修改券金額">
-				<p id="chooserTitle" class="chooser-title">請選擇新金額</p>
-				<div class="chooser-grid">
-					<button class="chooser-btn" type="button" data-value="0">無</button>
-					<button class="chooser-btn" type="button" data-value="10">10</button>
-					<button class="chooser-btn" type="button" data-value="20">20</button>
-					<button class="chooser-btn" type="button" data-value="50">50</button>
-					<button class="chooser-btn" type="button" data-value="100">100</button>
-					<button class="chooser-btn" type="button" data-value="200">200</button>
-					<button id="chooserFinish" class="chooser-finish" type="button">完成</button>
-				</div>
-			</section>
-			<div class="expired-toggle-wrap">
-				<button id="expiredToggleBtn" class="expired-toggle-btn" type="button" aria-expanded="false" aria-controls="expiredSection">查看已過期消費券</button>
+		</section>
+
+		<section id="editChooser" class="edit-chooser">
+			<h2 id="chooserTitle" class="panel-title">修改金額</h2>
+			<div class="chooser-grid">
+				<button class="chooser-btn" type="button" data-value="0">無</button>
+				<button class="chooser-btn" type="button" data-value="10">10</button>
+				<button class="chooser-btn" type="button" data-value="20">20</button>
+				<button class="chooser-btn" type="button" data-value="50">50</button>
+				<button class="chooser-btn" type="button" data-value="100">100</button>
+				<button class="chooser-btn" type="button" data-value="200">200</button>
 			</div>
-			<section id="expiredSection" class="expired-section" aria-label="已過期消費券">
-				<h2 class="record-title">已過期消費券</h2>
-				<div class="table-wrap">
-					<table>
-						<thead>
-							<tr>
-								<th>期數</th>
-								<th>支付渠道</th>
-								<th>券一</th>
-								<th>券二</th>
-								<th>券三</th>
-								<th>消費券總額</th>
-								<th>總消費額</th>
-								<th>狀態</th>
-							</tr>
-						</thead>
-						<tbody id="expiredRecordBody">
-							<tr>
-								<td colspan="8">目前沒有已過期的消費券。</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</section>
+			<div style="margin-top: 12px; text-align: right;">
+				<button id="chooserFinish" class="chooser-finish" type="button">套用</button>
+			</div>
+		</section>
+
+		<div class="expired-toggle-wrap">
+			<button id="expiredToggleBtn" class="expired-toggle-btn" type="button" aria-expanded="false">查看已過期消費券</button>
+		</div>
+
+		<section id="expiredSection" class="expired-section">
+			<h2 class="record-title">已過期消費券</h2>
+			<div class="table-wrap">
+				<table>
+					<colgroup>
+						<col class="col-created-by" />
+						<col class="col-phase" />
+						<col class="col-channel" />
+						<col class="col-voucher" />
+						<col class="col-voucher" />
+						<col class="col-voucher" />
+						<col class="col-total" />
+						<col class="col-spending-total" />
+					</colgroup>
+					<thead>
+						<tr>
+							<th>建立者</th>
+							<th>期數</th>
+							<th>渠道</th>
+							<th>券一</th>
+							<th>券二</th>
+							<th>券三</th>
+							<th>券總額</th>
+							<th>總消費額</th>
+						</tr>
+					</thead>
+					<tbody id="expiredRecordBody"></tbody>
+				</table>
+			</div>
 		</section>
 	</main>
 
+	<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 	<script>
-		const addBtn = document.getElementById("addBtn");
-		const menuPanel = document.getElementById("menuPanel");
-		const hint = document.getElementById("hint");
-		const voucherPanel = document.getElementById("voucherPanel");
-		const totalSpendEl = document.getElementById("totalSpend");
-		const voucherLeftEl = document.getElementById("voucherLeft");
-		const finishWrap = document.getElementById("finishWrap");
-		const cancelBtn = document.getElementById("cancelBtn");
-		const finishBtn = document.getElementById("finishBtn");
-		const recordBody = document.getElementById("recordBody");
-		const listExpiryDate = document.getElementById("listExpiryDate");
-		const listStatus = document.getElementById("listStatus");
-		const editChooser = document.getElementById("editChooser");
-		const expiredToggleBtn = document.getElementById("expiredToggleBtn");
-		const expiredSection = document.getElementById("expiredSection");
-		const expiredRecordBody = document.getElementById("expiredRecordBody");
-		const chooserTitle = document.getElementById("chooserTitle");
-		const chooserFinish = document.getElementById("chooserFinish");
-		const chooserButtons = document.querySelectorAll(".chooser-btn");
-		const topBanner = document.getElementById("topBanner");
-		const bannerFallback = document.getElementById("bannerFallback");
-		const optionButtons = document.querySelectorAll(".option-btn");
-		const voucherCards = document.querySelectorAll(".voucher-card");
+		const firebaseConfig = {
+			apiKey: "AIzaSyAU7Zv0H_PqMhBAHBKl6tW4msVqKh6M8X0",
+			authDomain: "coupon-62219.firebaseapp.com",
+			databaseURL: "https://coupon-62219-default-rtdb.asia-southeast1.firebasedatabase.app/",
+			projectId: "coupon-62219",
+			storageBucket: "coupon-62219.firebasestorage.app",
+			messagingSenderId: "388097488819",
+			appId: "1:388097488819:web:523638f17ac700d6f37dc6",
+			measurementId: "G-DQ7H6RSMSC"
+		};
 
-		const storageKey = "voucherRecordsV1";
+		const cloudRootPath = "voucher_app/group_shared";
+		const storageKeyPrefix = "voucherRecordsV1_";
+		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
 		const maxRecords = 8;
+
+		const loginUsers = [
+			{ username: "Admin", password: "123456", name: "Admin" },
+			{ username: "樂", password: "123456", name: "樂" },
+			{ username: "珊", password: "123456", name: "珊" },
+			{ username: "旭", password: "123456", name: "旭" },
+			{ username: "苑", password: "123456", name: "苑" },
+			{ username: "影", password: "123456", name: "影" },
+			{ username: "富", password: "123456", name: "富" },
+			{ username: "妍", password: "123456", name: "妍" },
+			{ username: "玥", password: "123456", name: "玥" },
+			{ username: "瑩", password: "123456", name: "瑩" },
+			{ username: "婆", password: "123456", name: "婆" },
+			{ username: "澤", password: "123456", name: "澤" }
+		];
+
 		const periodRules = [
 			{ label: "一", startMonth: 4, startDay: 10, endMonth: 4, endDay: 16 },
 			{ label: "二", startMonth: 4, startDay: 17, endMonth: 4, endDay: 23 },
 			{ label: "三", startMonth: 4, startDay: 24, endMonth: 4, endDay: 30 },
-			{ label: "四", startMonth: 5, startDay: 1, endMonth: 5, endDay: 16 },
-			{ label: "五", startMonth: 5, startDay: 8, endMonth: 5, endDay: 16 },
+			{ label: "四", startMonth: 5, startDay: 1, endMonth: 5, endDay: 7 },
+			{ label: "五", startMonth: 5, startDay: 8, endMonth: 5, endDay: 14 },
 			{ label: "六", startMonth: 5, startDay: 15, endMonth: 5, endDay: 21 },
 			{ label: "七", startMonth: 5, startDay: 22, endMonth: 5, endDay: 28 },
 			{ label: "八", startMonth: 5, startDay: 29, endMonth: 6, endDay: 4 },
 			{ label: "九", startMonth: 6, startDay: 5, endMonth: 6, endDay: 11 },
 			{ label: "十", startMonth: 6, startDay: 12, endMonth: 6, endDay: 18 }
 		];
+
+		const loginOverlay = document.getElementById("loginOverlay");
+		const loginForm = document.getElementById("loginForm");
+		const loginUser = document.getElementById("loginUser");
+		const loginPass = document.getElementById("loginPass");
+		const loginError = document.getElementById("loginError");
+		const topBanner = document.getElementById("topBanner");
+		const bannerFallback = document.getElementById("bannerFallback");
+		const accountSwitcher = document.getElementById("accountSwitcher");
+		const accountButtons = Array.from(accountSwitcher.querySelectorAll(".member-pill"));
+		const currentViewTag = document.getElementById("currentViewTag");
+		const currentUserTag = document.getElementById("currentUserTag");
+		const logoutBtn = document.getElementById("logoutBtn");
+		const addBtn = document.getElementById("addBtn");
+		const menuPanel = document.getElementById("menuPanel");
+		const optionButtons = Array.from(document.querySelectorAll(".option-btn"));
+		const voucherPanel = document.getElementById("voucherPanel");
+		const voucherCards = Array.from(document.querySelectorAll(".voucher-card"));
+		const finishWrap = document.getElementById("finishWrap");
+		const finishBtn = document.getElementById("finishBtn");
+		const cancelBtn = document.getElementById("cancelBtn");
+		const voucherLeftEl = document.getElementById("voucherLeft");
+		const totalSpendEl = document.getElementById("totalSpend");
+		const hint = document.getElementById("hint");
+		const readonlyNote = document.getElementById("readonlyNote");
+		const listOwner = document.getElementById("listOwner");
+		const listExpiryDate = document.getElementById("listExpiryDate");
+		const listStatus = document.getElementById("listStatus");
+		const recordBody = document.getElementById("recordBody");
+		const editChooser = document.getElementById("editChooser");
+		const chooserTitle = document.getElementById("chooserTitle");
+		const chooserButtons = Array.from(document.querySelectorAll(".chooser-btn"));
+		const chooserFinish = document.getElementById("chooserFinish");
+		const expiredToggleBtn = document.getElementById("expiredToggleBtn");
+		const expiredSection = document.getElementById("expiredSection");
+		const expiredRecordBody = document.getElementById("expiredRecordBody");
+
 		let selectedChannel = "";
 		let editingRecordId = null;
 		let editingField = "";
 		let editingValue = 0;
-		const selectedAmounts = {
-			券一: 0,
-			券二: 0,
-			券三: 0
+		let currentUser = null;
+		let currentViewUser = "樂";
+		let records = [];
+		let expiredRecords = [];
+		let realtimeDb = null;
+		let cloudSyncReady = false;
+		let cloudRef = null;
+		let cloudHandler = null;
+		const delegatedEditors = {
+			"苑": ["澤"],
+			"瑩": ["婆"],
+			"富": ["影", "妍", "玥"],
+			"影": ["富", "妍", "玥"]
 		};
-		let records = loadRecords();
 
-		topBanner.addEventListener("error", function () {
-			topBanner.style.display = "none";
-			bannerFallback.style.display = "block";
-		});
-
-		function closeMenu() {
-			menuPanel.classList.remove("show");
-			addBtn.setAttribute("aria-expanded", "false");
+		function canEditCurrentView() {
+			if (!currentUser) {
+				return false;
+			}
+			const allowedViews = delegatedEditors[currentUser.name] || [];
+			return currentUser.name === currentViewUser
+				|| currentUser.name === "妍"
+				|| currentUser.name === "Admin"
+				|| allowedViews.includes(currentViewUser);
 		}
 
-		addBtn.addEventListener("click", function () {
-			const isOpen = menuPanel.classList.toggle("show");
-			addBtn.setAttribute("aria-expanded", String(isOpen));
-		});
+		function getStorageKey(user) {
+			return storageKeyPrefix + user;
+		}
 
-		document.addEventListener("click", function (event) {
-			if (!menuPanel.contains(event.target) && !addBtn.contains(event.target)) {
-				closeMenu();
-			}
-		});
+		function getExpiredStorageKey(user) {
+			return expiredStorageKeyPrefix + user;
+		}
 
-		document.addEventListener("keydown", function (event) {
-			if (event.key === "Escape") {
-				closeMenu();
+		function getCleanArray(list) {
+			if (!Array.isArray(list)) {
+				return [];
 			}
-		});
+			return list.filter(function (item) {
+				return item && typeof item.channel === "string";
+			});
+		}
 
-		function getSelectedValue(card) {
-			const selectedBtn = card.querySelector(".value-btn.selected");
-			if (!selectedBtn) {
-				return 0;
+		function loadRecords(user) {
+			const raw = localStorage.getItem(getStorageKey(user));
+			if (!raw) {
+				return [];
 			}
-			const rawValue = selectedBtn.getAttribute("data-value");
-			const numericValue = Number(rawValue);
-			if (Number.isNaN(numericValue)) {
-				return 0;
+			try {
+				return getCleanArray(JSON.parse(raw));
+			} catch (error) {
+				return [];
 			}
-			return numericValue;
+		}
+
+		function loadExpiredRecords(user) {
+			const raw = localStorage.getItem(getExpiredStorageKey(user));
+			if (!raw) {
+				return [];
+			}
+			try {
+				return getCleanArray(JSON.parse(raw));
+			} catch (error) {
+				return [];
+			}
+		}
+
+		function persistLocal() {
+			localStorage.setItem(getStorageKey(currentViewUser), JSON.stringify(records));
+			localStorage.setItem(getExpiredStorageKey(currentViewUser), JSON.stringify(expiredRecords));
+		}
+
+		function subscribeCloudData() {
+			if (!realtimeDb || !currentViewUser) {
+				return;
+			}
+			if (cloudRef && cloudHandler) {
+				cloudRef.off("value", cloudHandler);
+			}
+			cloudRef = realtimeDb.ref(cloudRootPath + "/" + currentViewUser);
+			cloudHandler = function (snapshot) {
+				const data = snapshot.val();
+				if (!data) {
+					cloudRef.set({
+						records: records,
+						expiredRecords: expiredRecords,
+						updatedAt: Date.now()
+					});
+					return;
+				}
+				records = getCleanArray(data.records);
+				expiredRecords = getCleanArray(data.expiredRecords);
+				persistLocal();
+				renderRecords();
+				updateStats();
+			};
+			cloudRef.on("value", cloudHandler, function (error) {
+				console.error("Firebase 同步監聽失敗", error);
+				hint.textContent = "Firebase 即時同步失敗，已切換為本機模式。";
+				cloudSyncReady = false;
+			});
+		}
+
+		function initCloudSync() {
+			try {
+				if (typeof firebase === "undefined") {
+					return;
+				}
+				if (!firebase.apps.length) {
+					firebase.initializeApp(firebaseConfig);
+				}
+				realtimeDb = firebase.database();
+				cloudSyncReady = true;
+				subscribeCloudData();
+				hint.textContent = "已啟用 Firebase Realtime Database 即時同步（多人共用）。";
+			} catch (error) {
+				console.error("Firebase 初始化失敗", error);
+				hint.textContent = "Firebase 初始化失敗，已切換為本機模式。";
+				cloudSyncReady = false;
+			}
+		}
+
+		function syncCloudData() {
+			if (!cloudSyncReady || !realtimeDb || !currentViewUser) {
+				return;
+			}
+			realtimeDb.ref(cloudRootPath + "/" + currentViewUser).set({
+				records: records,
+				expiredRecords: expiredRecords,
+				updatedAt: Date.now()
+			}).catch(function (error) {
+				console.error("Firebase 寫入失敗", error);
+			});
+		}
+
+		function saveRecords() {
+			persistLocal();
+			syncCloudData();
+		}
+
+		function saveExpiredRecords() {
+			persistLocal();
+			syncCloudData();
 		}
 
 		function parseMopAmount(text) {
@@ -781,31 +1044,28 @@
 				voucherSum += record.voucherTotal;
 				spendingSum += getRecordSpendingTotal(record);
 			});
-			return {
-				voucherSum: voucherSum,
-				spendingSum: spendingSum
-			};
+			return { voucherSum: voucherSum, spendingSum: spendingSum };
 		}
 
 		function verifySummaryConsistency() {
 			const expected = calculateSummaryFromRecords();
 			const shownVoucher = parseMopAmount(voucherLeftEl.textContent);
 			const shownSpending = parseMopAmount(totalSpendEl.textContent);
-			const isCorrect = shownVoucher === expected.voucherSum && shownSpending === expected.spendingSum;
-
-			if (!isCorrect) {
+			if (shownVoucher !== expected.voucherSum) {
 				voucherLeftEl.textContent = "MOP " + expected.voucherSum;
+			}
+			if (shownSpending !== expected.spendingSum) {
 				totalSpendEl.textContent = "MOP " + expected.spendingSum;
 			}
-
-			return isCorrect;
 		}
 
 		function updateStats() {
 			const summary = calculateSummaryFromRecords();
 			voucherLeftEl.textContent = "MOP " + summary.voucherSum;
 			totalSpendEl.textContent = "MOP " + summary.spendingSum;
-			finishBtn.disabled = !canFinishRecord();
+			addBtn.disabled = !(currentUser && canEditCurrentView());
+			finishBtn.disabled = !(selectedChannel && currentUser && canEditCurrentView());
+			readonlyNote.classList.toggle("show", Boolean(currentUser) && !canEditCurrentView());
 			verifySummaryConsistency();
 		}
 
@@ -856,39 +1116,6 @@
 			return null;
 		}
 
-		function ensurePeriodData(record) {
-			const created = parseDateString(record.createdDate);
-			if (!created) {
-				if (!record.phaseLabel) {
-					record.phaseLabel = "-";
-				}
-				if (!record.phaseStartDate) {
-					record.phaseStartDate = "-";
-				}
-				if (!record.expiryDate) {
-					record.expiryDate = "-";
-				}
-				record.status = getStatus(record.phaseStartDate, record.expiryDate);
-				return;
-			}
-
-			const periodInfo = getPeriodInfoByDate(created);
-			if (!periodInfo) {
-				record.phaseLabel = "-";
-				record.phaseStartDate = record.createdDate;
-				record.expiryDate = formatDate(addDays(created, 180));
-				record.status = getStatus(record.phaseStartDate, record.expiryDate);
-				return;
-			}
-
-			record.phaseLabel = periodInfo.label;
-			const startDateObj = new Date(created.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay);
-			record.phaseStartDate = formatDate(startDateObj);
-			const expiryDateObj = new Date(created.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay);
-			record.expiryDate = formatDate(expiryDateObj);
-			record.status = getStatus(record.phaseStartDate, record.expiryDate);
-		}
-
 		function addDays(date, days) {
 			const copy = new Date(date);
 			copy.setDate(copy.getDate() + days);
@@ -909,64 +1136,78 @@
 				const expiredDays = Math.ceil(Math.abs(remainingMs) / msPerDay);
 				return "已過期 " + expiredDays + " 天";
 			}
-			const diffDays = Math.floor(remainingMs / msPerDay);
-			const diffHours = Math.ceil(remainingMs / (60 * 60 * 1000));
-
 			const phaseStart = new Date(phaseStartDateStr + "T00:00:00");
 			if (Number.isNaN(phaseStart.getTime())) {
-				if (diffDays < 1) {
-					return "剩餘 " + diffHours + " 小時";
-				}
-				return "剩餘 " + diffDays + " 天";
+				const diffDays = Math.floor(remainingMs / msPerDay);
+				const diffHours = Math.ceil(remainingMs / (60 * 60 * 1000));
+				return diffDays < 1 ? "剩餘 " + diffHours + " 小時" : "剩餘 " + diffDays + " 天";
 			}
+			const lotteryEndDate = new Date(phaseStart);
+			lotteryEndDate.setDate(lotteryEndDate.getDate() + 2);
+			lotteryEndDate.setHours(0, 0, 0, 0);
+			const lotteryEndTime = new Date(lotteryEndDate);
+			lotteryEndTime.setHours(23, 59, 59, 999);
+			const expiryDateOnly = new Date(expiry);
+			expiryDateOnly.setHours(0, 0, 0, 0);
 
-			const lotteryEnd = new Date(phaseStart);
-			lotteryEnd.setDate(lotteryEnd.getDate() + 2);
-			const remainingText = diffDays < 1 ? ("剩餘 " + diffHours + " 小時") : ("剩餘 " + diffDays + " 天");
-			if (today <= lotteryEnd) {
-				return "抽獎中（" + remainingText + "）";
+			if (today < lotteryEndDate) {
+				const lotteryRemainingDays = Math.max(1, Math.ceil((lotteryEndDate.getTime() - today.getTime()) / msPerDay));
+				return "抽獎中（剩餘 " + lotteryRemainingDays + " 天）";
 			}
-			return "消費中（" + remainingText + "）";
+			if (today.getTime() === lotteryEndDate.getTime()) {
+				const lotteryRemainingMs = lotteryEndTime.getTime() - now.getTime();
+				const lotteryRemainingHours = Math.max(1, Math.ceil(lotteryRemainingMs / (60 * 60 * 1000)));
+				return "抽獎中（剩餘 " + lotteryRemainingHours + " 小時）";
+			}
+			if (today < expiryDateOnly) {
+				const spendingRemainingDays = Math.max(1, Math.ceil((expiryDateOnly.getTime() - today.getTime()) / msPerDay));
+				return "消費中（剩餘 " + spendingRemainingDays + " 天）";
+			}
+			const spendingRemainingHours = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
+			return "消費中（剩餘 " + spendingRemainingHours + " 小時）";
 		}
 
-		function canFinishRecord() {
-			return Boolean(selectedChannel);
+		function ensurePeriodData(record) {
+			const created = parseDateString(record.createdDate);
+			if (!created) {
+				record.phaseLabel = record.phaseLabel || "-";
+				record.phaseStartDate = record.phaseStartDate || "-";
+				record.expiryDate = record.expiryDate || "-";
+				record.status = getStatus(record.phaseStartDate, record.expiryDate);
+				return;
+			}
+			const periodInfo = getPeriodInfoByDate(created);
+			if (!periodInfo) {
+				record.phaseLabel = "-";
+				record.phaseStartDate = record.createdDate;
+				record.expiryDate = formatDate(addDays(created, 180));
+				record.status = getStatus(record.phaseStartDate, record.expiryDate);
+				return;
+			}
+			record.phaseLabel = periodInfo.label;
+			record.phaseStartDate = formatDate(new Date(created.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay));
+			record.expiryDate = formatDate(new Date(created.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay));
+			record.status = getStatus(record.phaseStartDate, record.expiryDate);
 		}
 
-		function loadRecords() {
-			const raw = localStorage.getItem(storageKey);
-			if (!raw) {
-				return [];
+		function formatMonthDay(dateStr) {
+			if (typeof dateStr !== "string") {
+				return "-";
 			}
-			try {
-				const parsed = JSON.parse(raw);
-				if (!Array.isArray(parsed)) {
-					return [];
-				}
-				const unique = [];
-				const seenChannels = new Set();
-				for (let i = 0; i < parsed.length; i += 1) {
-					const item = parsed[i];
-					if (!item || typeof item.channel !== "string") {
-						continue;
-					}
-					if (seenChannels.has(item.channel)) {
-						continue;
-					}
-					seenChannels.add(item.channel);
-					unique.push(item);
-					if (unique.length >= maxRecords) {
-						break;
-					}
-				}
-				return unique;
-			} catch (error) {
-				return [];
+			const parts = dateStr.split("-");
+			if (parts.length !== 3) {
+				return dateStr;
 			}
+			const month = Number(parts[1]);
+			const day = Number(parts[2]);
+			if (Number.isNaN(month) || Number.isNaN(day)) {
+				return dateStr;
+			}
+			return month + "/" + day;
 		}
 
-		function saveRecords() {
-			localStorage.setItem(storageKey, JSON.stringify(records));
+		function getPhaseDisplay(record) {
+			return record.phaseLabel || "-";
 		}
 
 		function normalizeNumber(value) {
@@ -985,13 +1226,7 @@
 			if (typeof record.spendingTotal === "number" && !Number.isNaN(record.spendingTotal)) {
 				return record.spendingTotal;
 			}
-			if (typeof record.voucherTotal === "number" && !Number.isNaN(record.voucherTotal)) {
-				return record.voucherTotal * 3;
-			}
-			if (typeof record.total === "number" && !Number.isNaN(record.total)) {
-				return record.total * 3;
-			}
-			return 0;
+			return normalizeNumber(record.voucherTotal) * 3;
 		}
 
 		function getVoucherLabel(field) {
@@ -1018,6 +1253,9 @@
 		}
 
 		function openEditChooser(recordId, field, currentValue) {
+			if (!canEditCurrentView()) {
+				return;
+			}
 			editingRecordId = recordId;
 			editingField = field;
 			editingValue = currentValue;
@@ -1032,65 +1270,95 @@
 			return typeof statusText === "string" && statusText.indexOf("已過期") === 0;
 		}
 
-		function renderExpiredRecords() {
-			const expiredRecords = records.filter(function (record) {
+		function moveExpiredRecordsToArchive() {
+			if (records.length === 0) {
+				return;
+			}
+			const active = [];
+			const moved = [];
+			records.forEach(function (record) {
 				ensurePeriodData(record);
-				return isExpiredStatus(record.status);
+				if (isExpiredStatus(record.status)) {
+					moved.push(record);
+				} else {
+					active.push(record);
+				}
 			});
+			if (moved.length === 0) {
+				return;
+			}
+			records = active;
+			expiredRecords = moved.concat(expiredRecords).filter(function (record, index, array) {
+				return array.findIndex(function (candidate) {
+					return candidate.id === record.id;
+				}) === index;
+			});
+			saveRecords();
+			saveExpiredRecords();
+		}
 
+		function renderExpiredRecords() {
+			expiredRecords.forEach(function (record) {
+				recalculateRecordTotals(record);
+				ensurePeriodData(record);
+			});
 			if (expiredRecords.length === 0) {
 				expiredRecordBody.innerHTML = "<tr><td colspan=\"8\">目前沒有已過期的消費券。</td></tr>";
 				return;
 			}
-
 			expiredRecordBody.innerHTML = expiredRecords.map(function (record) {
-				recalculateRecordTotals(record);
 				return "<tr>"
-					+ "<td>" + record.phaseLabel + "</td>"
+					+ "<td>" + (record.createdBy || currentViewUser) + "</td>"
+					+ "<td>" + getPhaseDisplay(record) + "</td>"
 					+ "<td>" + record.channel + "</td>"
 					+ "<td>" + record.voucher1 + "</td>"
 					+ "<td>" + record.voucher2 + "</td>"
 					+ "<td>" + record.voucher3 + "</td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
-					+ "<td class=\"status-expired\">" + record.status + "</td>"
 					+ "</tr>";
 			}).join("");
 		}
 
 		function renderRecords() {
+			moveExpiredRecordsToArchive();
+			listOwner.textContent = currentViewUser;
+			currentViewTag.textContent = "目前檢視：" + currentViewUser;
+			accountButtons.forEach(function (btn) {
+				btn.classList.toggle("active", btn.getAttribute("data-user") === currentViewUser);
+			});
 			if (records.length === 0) {
-				recordBody.innerHTML = "<tr><td colspan=\"8\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
-				renderExpiredRecords();
+				recordBody.innerHTML = "<tr><td colspan=\"9\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
 				listExpiryDate.textContent = "-";
 				listStatus.textContent = "-";
+				renderExpiredRecords();
 				closeEditChooser();
 				verifySummaryConsistency();
+				updateStats();
 				return;
 			}
-
 			recordBody.innerHTML = records.map(function (record) {
 				recalculateRecordTotals(record);
 				ensurePeriodData(record);
+				const disabledAttr = canEditCurrentView() ? "" : " disabled";
 				return "<tr>"
-					+ "<td>" + record.phaseLabel + "</td>"
+					+ "<td>" + (record.createdBy || currentViewUser) + "</td>"
+					+ "<td>" + getPhaseDisplay(record) + "</td>"
 					+ "<td>" + record.channel + "</td>"
-					+ "<td><div class=\"amount-cell\"><span>" + record.voucher1 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher1\" aria-label=\"修改券一金額\" title=\"修改券一金額\">&#9998;</button></div></td>"
-					+ "<td><div class=\"amount-cell\"><span>" + record.voucher2 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher2\" aria-label=\"修改券二金額\" title=\"修改券二金額\">&#9998;</button></div></td>"
-					+ "<td><div class=\"amount-cell\"><span>" + record.voucher3 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher3\" aria-label=\"修改券三金額\" title=\"修改券三金額\">&#9998;</button></div></td>"
+					+ "<td><div class=\"amount-cell\"><span>" + record.voucher1 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher1\"" + disabledAttr + ">✎</button></div></td>"
+					+ "<td><div class=\"amount-cell\"><span>" + record.voucher2 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher2\"" + disabledAttr + ">✎</button></div></td>"
+					+ "<td><div class=\"amount-cell\"><span>" + record.voucher3 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher3\"" + disabledAttr + ">✎</button></div></td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
-					+ "<td><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\">刪除</button></td>"
+					+ "<td><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">刪除</button></td>"
 					+ "</tr>";
 			}).join("");
-
 			const latestRecord = records[0];
-			ensurePeriodData(latestRecord);
 			listExpiryDate.textContent = latestRecord.expiryDate || "-";
 			listStatus.textContent = latestRecord.status || "-";
 			renderExpiredRecords();
-
 			verifySummaryConsistency();
+			updateStats();
 		}
 
 		function clearSelections() {
@@ -1099,94 +1367,186 @@
 					btn.classList.remove("selected");
 				});
 			});
-			selectedAmounts.券一 = 0;
-			selectedAmounts.券二 = 0;
-			selectedAmounts.券三 = 0;
 			finishWrap.classList.remove("show");
 		}
 
+		function getSelectedValue(card) {
+			const selectedBtn = card.querySelector(".value-btn.selected");
+			if (!selectedBtn) {
+				return 0;
+			}
+			return Number(selectedBtn.getAttribute("data-value")) || 0;
+		}
+
+		function switchViewUser(user) {
+			currentViewUser = user;
+			records = loadRecords(user);
+			expiredRecords = loadExpiredRecords(user);
+			subscribeCloudData();
+			renderRecords();
+			updateStats();
+		}
+
+		function closeMenu() {
+			menuPanel.classList.remove("show");
+			addBtn.setAttribute("aria-expanded", "false");
+		}
+
+		function setLoginState(user) {
+			currentUser = user;
+			const isLoggedIn = Boolean(currentUser);
+			addBtn.disabled = !isLoggedIn || !canEditCurrentView();
+			if (isLoggedIn) {
+				currentUserTag.textContent = "目前登入：" + currentUser.name;
+				logoutBtn.classList.add("show");
+				loginOverlay.style.display = "none";
+				if (accountButtons.some(function (btn) { return btn.getAttribute("data-user") === currentUser.name; })) {
+					switchViewUser(currentUser.name);
+				}
+				hint.textContent = canEditCurrentView() ? "已登入：" + currentUser.name + "，可開始新增或修改資料。" : "已登入：" + currentUser.name + "，目前正查看其他帳號記錄。";
+				updateStats();
+				return;
+			}
+			currentUserTag.textContent = "未登入";
+			logoutBtn.classList.remove("show");
+			loginOverlay.style.display = "flex";
+			closeMenu();
+			voucherPanel.classList.remove("show");
+			finishWrap.classList.remove("show");
+			selectedChannel = "";
+			hint.textContent = "請先登入後再操作。";
+			updateStats();
+		}
+
+		topBanner.addEventListener("error", function () {
+			topBanner.style.display = "none";
+			bannerFallback.style.display = "block";
+		});
+
+		loginForm.addEventListener("submit", function (event) {
+			event.preventDefault();
+			const username = loginUser.value.trim();
+			const password = loginPass.value;
+			const matched = loginUsers.find(function (item) {
+				return item.username === username && item.password === password;
+			});
+			if (!matched) {
+				loginError.textContent = "帳號或密碼錯誤，請再試一次。";
+				return;
+			}
+			loginError.textContent = "";
+			loginPass.value = "";
+			setLoginState({ username: matched.username, name: matched.name });
+		});
+
+		logoutBtn.addEventListener("click", function () {
+			setLoginState(null);
+		});
+
+		addBtn.addEventListener("click", function () {
+			if (!currentUser) {
+				hint.textContent = "請先登入後再新增記錄。";
+				return;
+			}
+			if (!canEditCurrentView()) {
+				hint.textContent = "你只能修改自己帳號的記錄列表。";
+				return;
+			}
+			const isOpen = menuPanel.classList.toggle("show");
+			addBtn.setAttribute("aria-expanded", String(isOpen));
+		});
+
+		document.addEventListener("click", function (event) {
+			if (!menuPanel.contains(event.target) && !addBtn.contains(event.target)) {
+				closeMenu();
+			}
+		});
+
+		document.addEventListener("keydown", function (event) {
+			if (event.key === "Escape") {
+				closeMenu();
+				closeEditChooser();
+			}
+		});
+
+		accountButtons.forEach(function (btn) {
+			btn.addEventListener("click", function () {
+				switchViewUser(btn.getAttribute("data-user"));
+				if (currentUser) {
+					hint.textContent = canEditCurrentView() ? "目前正在管理「" + currentViewUser + "」的記錄。" : "目前正在查看「" + currentViewUser + "」的記錄。";
+				}
+			});
+		});
+
 		optionButtons.forEach(function (btn) {
 			btn.addEventListener("click", function () {
+				if (!currentUser) {
+					hint.textContent = "請先登入後再選擇支付渠道。";
+					return;
+				}
+				if (!canEditCurrentView()) {
+					hint.textContent = "你只能修改自己帳號的記錄列表。";
+					return;
+				}
 				selectedChannel = btn.textContent;
 				clearSelections();
 				hint.textContent = "你選擇的支付渠道：" + selectedChannel;
 				voucherPanel.classList.add("show");
 				finishWrap.classList.add("show");
-				updateStats();
 				closeMenu();
+				updateStats();
 			});
 		});
 
 		voucherCards.forEach(function (card) {
-			const voucherName = card.getAttribute("data-voucher");
-			const valueButtons = card.querySelectorAll(".value-btn");
-
+			const valueButtons = Array.from(card.querySelectorAll(".value-btn"));
 			valueButtons.forEach(function (valueBtn) {
 				valueBtn.addEventListener("click", function () {
 					valueButtons.forEach(function (btn) {
 						btn.classList.remove("selected");
 					});
 					valueBtn.classList.add("selected");
-					selectedAmounts[voucherName] = Number(valueBtn.getAttribute("data-value")) || 0;
 					finishWrap.classList.add("show");
-					hint.textContent = voucherName + " 已選擇：" + valueBtn.getAttribute("data-value");
 					updateStats();
 				});
 			});
 		});
 
 		finishBtn.addEventListener("click", function () {
+			if (!currentUser) {
+				hint.textContent = "請先登入後再新增記錄。";
+				return;
+			}
+			if (!canEditCurrentView()) {
+				hint.textContent = "你只能修改自己帳號的記錄列表。";
+				return;
+			}
 			if (!selectedChannel) {
 				hint.textContent = "請先選擇支付渠道。";
 				return;
 			}
-
-			const duplicate = records.some(function (record) {
-				return record.channel === selectedChannel;
-			});
-			if (duplicate) {
+			if (records.some(function (record) { return record.channel === selectedChannel; })) {
 				hint.textContent = "此支付渠道已存在，不能重覆新增。";
 				return;
 			}
-
 			if (records.length >= maxRecords) {
 				hint.textContent = "記錄列表最多只能有 8 筆數據。";
 				return;
 			}
-
 			const now = new Date();
 			const createdDate = formatDate(now);
 			const periodInfo = getPeriodInfoByDate(now);
 			const phaseLabel = periodInfo ? periodInfo.label : "-";
-			const phaseStartDate = periodInfo
-				? formatDate(new Date(now.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay))
-				: createdDate;
-			const expiryDate = periodInfo
-				? formatDate(new Date(now.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay))
-				: formatDate(addDays(now, 180));
-			let voucher1 = 0;
-			let voucher2 = 0;
-			let voucher3 = 0;
-
-			voucherCards.forEach(function (card) {
-				const voucherName = card.getAttribute("data-voucher");
-				const value = getSelectedValue(card);
-				if (voucherName === "券一") {
-					voucher1 = value;
-				}
-				if (voucherName === "券二") {
-					voucher2 = value;
-				}
-				if (voucherName === "券三") {
-					voucher3 = value;
-				}
-			});
+			const phaseStartDate = periodInfo ? formatDate(new Date(now.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay)) : createdDate;
+			const expiryDate = periodInfo ? formatDate(new Date(now.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay)) : formatDate(addDays(now, 180));
+			const voucher1 = getSelectedValue(voucherCards[0]);
+			const voucher2 = getSelectedValue(voucherCards[1]);
+			const voucher3 = getSelectedValue(voucherCards[2]);
 			const voucherTotal = voucher1 + voucher2 + voucher3;
 			const spendingTotal = voucherTotal * 3;
-			const status = getStatus(phaseStartDate, expiryDate);
-
 			records.unshift({
 				id: Date.now(),
+				createdBy: currentUser.name,
 				phaseLabel: phaseLabel,
 				phaseStartDate: phaseStartDate,
 				channel: selectedChannel,
@@ -1197,16 +1557,15 @@
 				voucherTotal: voucherTotal,
 				spendingTotal: spendingTotal,
 				expiryDate: expiryDate,
-				status: status
+				status: getStatus(phaseStartDate, expiryDate)
 			});
-
 			saveRecords();
 			renderRecords();
 			hint.textContent = "已記錄完成：" + selectedChannel + "，消費券總額 " + voucherTotal;
 			voucherPanel.classList.remove("show");
+			selectedChannel = "";
 			clearSelections();
 			updateStats();
-			finishBtn.disabled = true;
 		});
 
 		cancelBtn.addEventListener("click", function () {
@@ -1225,25 +1584,21 @@
 			if (target.classList.contains("edit-voucher-btn")) {
 				const id = Number(target.getAttribute("data-id"));
 				const field = target.getAttribute("data-field") || "";
-				const record = records.find(function (item) {
-					return item.id === id;
-				});
+				const record = records.find(function (item) { return item.id === id; });
 				if (!record || !field) {
 					return;
 				}
-				const currentValue = normalizeNumber(record[field]);
-				openEditChooser(id, field, currentValue);
+				openEditChooser(id, field, normalizeNumber(record[field]));
 				return;
 			}
-
 			if (!target.classList.contains("delete-btn")) {
 				return;
 			}
-
+			if (!canEditCurrentView()) {
+				return;
+			}
 			const id = Number(target.getAttribute("data-id"));
-			records = records.filter(function (record) {
-				return record.id !== id;
-			});
+			records = records.filter(function (record) { return record.id !== id; });
 			saveRecords();
 			renderRecords();
 			updateStats();
@@ -1263,18 +1618,14 @@
 		});
 
 		chooserFinish.addEventListener("click", function () {
-			if (!editingRecordId || !editingField) {
+			if (!editingRecordId || !editingField || !canEditCurrentView()) {
 				return;
 			}
-
-			const record = records.find(function (item) {
-				return item.id === editingRecordId;
-			});
+			const record = records.find(function (item) { return item.id === editingRecordId; });
 			if (!record) {
 				closeEditChooser();
 				return;
 			}
-
 			record[editingField] = editingValue;
 			recalculateRecordTotals(record);
 			saveRecords();
@@ -1293,8 +1644,9 @@
 			}
 		});
 
-		renderRecords();
-		updateStats();
+		switchViewUser("樂");
+		setLoginState(null);
+		initCloudSync();
 	</script>
 </body>
 </html>
