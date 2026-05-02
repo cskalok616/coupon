@@ -499,7 +499,8 @@
 			background: #e6f8ec;
 			color: #1f7a47;
 			padding: 2px 4px;
-			font-size: 0.64rem;
+			font-size: 0.7rem;
+			font-weight: 400;
 			border-radius: 6px;
 			line-height: 1;
 		}
@@ -508,7 +509,8 @@
 			background: #ffe4e4;
 			color: #a12626;
 			padding: 2px 4px;
-			font-size: 0.64rem;
+			font-size: 0.7rem;
+			font-weight: 400;
 			line-height: 1;
 		}
 
@@ -630,7 +632,7 @@
 			<div id="bannerFallback" class="banner-fallback">找不到圖片，請將橫幅檔案命名為 banner.jpg 並放在同一資料夾。</div>
 			<div class="stats-box">
 				<div class="stat-item">
-					<span class="stat-label">剩餘消費券金額</span>
+					<span class="stat-label">消費券總金額</span>
 					<strong class="stat-value" id="voucherLeft">MOP 0</strong>
 				</div>
 				<div class="stat-item">
@@ -1419,7 +1421,7 @@
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher3 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher3\"" + disabledAttr + ">✎</button></div></td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
-					+ "<td><div class=\"action-cell\"><button type=\"button\" class=\"consume-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">已用</button><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">刪</button></div></td>"
+					+ "<td><div class=\"action-cell\"><button type=\"button\" class=\"consume-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">已用</button><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">刪除</button></div></td>"
 					+ "</tr>";
 			}).join("");
 			const latestRecord = records[0];
