@@ -392,9 +392,15 @@
 		table {
 			width: 100%;
 			border-collapse: collapse;
-			min-width: 840px;
+			min-width: 155px;
 			font-size: 0.82rem;
 			table-layout: auto;
+		}
+
+		.record-section table {
+			width: 325px;
+			min-width: 423px;
+			table-layout: fixed;
 		}
 
 		.col-created-by {
@@ -402,27 +408,27 @@
 		}
 
 		.col-phase {
-			width: 15px;
+			width: 20px;
 		}
 
 		.col-channel {
-			width: 30px;
+			width: 50px;
 		}
 
 		.col-voucher {
-			width: 10px;
+			width: 35px;
 		}
 
 		.col-total {
-			width: 30px;
+			width: 45px;
 		}
 
 		.col-spending-total {
-			width: 30px;
+			width: 45px;
 		}
 
 		.col-action {
-			width: 20px;
+			width: 60px;
 		}
 
 		th,
@@ -433,19 +439,19 @@
 			color: #2a4b68;
 		}
 
-		table th:nth-child(2),
-		table td:nth-child(2) {
+		.record-section table th:nth-child(1),
+		.record-section table td:nth-child(1) {
 			padding-right: 0;
 		}
 
-		table th:nth-child(3),
-		table td:nth-child(3) {
+		.record-section table th:nth-child(2),
+		.record-section table td:nth-child(2) {
 			padding-left: 0;
 			padding-right: 0;
 		}
 
-		table th:nth-child(4),
-		table td:nth-child(4) {
+		.record-section table th:nth-child(3),
+		.record-section table td:nth-child(3) {
 			padding-left: 0;
 		}
 
@@ -460,7 +466,17 @@
 			gap: 0;
 		}
 
+		.action-cell {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 2px;
+			flex-wrap: nowrap;
+			white-space: nowrap;
+		}
+
 		.edit-inline-btn,
+		.consume-btn,
 		.delete-btn {
 			border: none;
 			padding: 6px 8px;
@@ -479,9 +495,21 @@
 			line-height: 1;
 		}
 
+		.consume-btn {
+			background: #e6f8ec;
+			color: #1f7a47;
+			padding: 2px 4px;
+			font-size: 0.64rem;
+			border-radius: 6px;
+			line-height: 1;
+		}
+
 		.delete-btn {
 			background: #ffe4e4;
 			color: #a12626;
+			padding: 2px 4px;
+			font-size: 0.64rem;
+			line-height: 1;
 		}
 
 		button[disabled] {
@@ -590,7 +618,6 @@
 			<h2 class="login-title">喂，登入左先喇</h2>
 			<form id="loginForm" class="login-form">
 				<input id="loginUser" class="login-input" type="text" placeholder="帳號" autocomplete="username" required />
-				<input id="loginPass" class="login-input" type="password" placeholder="密碼" autocomplete="current-password" required />
 				<button class="login-submit" type="submit">登入</button>
 			</form>
 			<p id="loginError" class="login-error"></p>
@@ -615,9 +642,8 @@
 
 		<div class="topbar">
 			<div class="title-block">
-				<h1>我抽到的消費券</h1>
+				<h1>下面這個人抽到的消費券</h1>
 				<div class="member-switcher-wrap">
-					<span class="switcher-label">登入帳號群</span>
 					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
 						<button class="member-pill" type="button" data-user="樂">樂</button>
 						<button class="member-pill" type="button" data-user="珊">珊</button>
@@ -643,13 +669,13 @@
 
 		<section id="menuPanel" class="menu-panel" aria-label="支付渠道選項">
 			<div class="option-grid">
-				<button class="option-btn" type="button">澳門通 Mpay</button>
+				<button class="option-btn" type="button">Mpay</button>
 				<button class="option-btn" type="button">中國銀行</button>
-				<button class="option-btn" type="button">支付寶(澳門)</button>
+				<button class="option-btn" type="button">支付寶</button>
 				<button class="option-btn" type="button">國際銀行</button>
 				<button class="option-btn" type="button">工商銀行</button>
 				<button class="option-btn" type="button">UePay</button>
-				<button class="option-btn" type="button">大豐 豐付寶</button>
+				<button class="option-btn" type="button">豐付寶</button>
 				<button class="option-btn" type="button">廣發錢包</button>
 			</div>
 		</section>
@@ -717,9 +743,8 @@
 				</div>
 			</div>
 			<div class="table-wrap">
-				<table>
+				<table id="recordTable">
 					<colgroup>
-						<col class="col-created-by" />
 						<col class="col-phase" />
 						<col class="col-channel" />
 						<col class="col-voucher" />
@@ -731,14 +756,13 @@
 					</colgroup>
 					<thead>
 						<tr>
-							<th>建立者</th>
-							<th>期數</th>
+							<th>期</th>
 							<th>渠道</th>
 							<th>券一</th>
 							<th>券二</th>
 							<th>券三</th>
 							<th>券總額</th>
-							<th>總消費額</th>
+							<th>消費額</th>
 							<th>操作</th>
 						</tr>
 					</thead>
@@ -763,11 +787,11 @@
 		</section>
 
 		<div class="expired-toggle-wrap">
-			<button id="expiredToggleBtn" class="expired-toggle-btn" type="button" aria-expanded="false">查看已過期消費券</button>
+			<button id="expiredToggleBtn" class="expired-toggle-btn" type="button" aria-expanded="false">查看已使用/已過期的消費券</button>
 		</div>
 
 		<section id="expiredSection" class="expired-section">
-			<h2 class="record-title">已過期消費券</h2>
+			<h2 class="record-title">已使用/已過期的消費券</h2>
 			<div class="table-wrap">
 				<table>
 					<colgroup>
@@ -779,6 +803,7 @@
 						<col class="col-voucher" />
 						<col class="col-total" />
 						<col class="col-spending-total" />
+						<col class="col-total" />
 					</colgroup>
 					<thead>
 						<tr>
@@ -790,6 +815,7 @@
 							<th>券三</th>
 							<th>券總額</th>
 							<th>總消費額</th>
+							<th>狀態</th>
 						</tr>
 					</thead>
 					<tbody id="expiredRecordBody"></tbody>
@@ -816,6 +842,7 @@
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
 		const maxRecords = 8;
+		const autoLoginPassword = "123456";
 
 		const loginUsers = [
 			{ username: "Admin", password: "123456", name: "Admin" },
@@ -848,7 +875,6 @@
 		const loginOverlay = document.getElementById("loginOverlay");
 		const loginForm = document.getElementById("loginForm");
 		const loginUser = document.getElementById("loginUser");
-		const loginPass = document.getElementById("loginPass");
 		const loginError = document.getElementById("loginError");
 		const topBanner = document.getElementById("topBanner");
 		const bannerFallback = document.getElementById("bannerFallback");
@@ -899,6 +925,11 @@
 			"富": ["影", "妍", "玥"],
 			"影": ["富", "妍", "玥"]
 		};
+		const channelAliases = {
+			"澳門通 Mpay": "Mpay",
+			"支付寶(澳門)": "支付寶",
+			"大豐 豐付寶": "豐付寶"
+		};
 
 		function canEditCurrentView() {
 			if (!currentUser) {
@@ -919,13 +950,29 @@
 			return expiredStorageKeyPrefix + user;
 		}
 
+		function normalizeChannelName(channel) {
+			if (typeof channel !== "string") {
+				return channel;
+			}
+			return channelAliases[channel] || channel;
+		}
+
 		function getCleanArray(list) {
 			if (!Array.isArray(list)) {
-				return [];
+				return { items: [], changed: false };
 			}
-			return list.filter(function (item) {
+			let changed = false;
+			const items = list.filter(function (item) {
 				return item && typeof item.channel === "string";
+			}).map(function (item) {
+				const normalizedChannel = normalizeChannelName(item.channel);
+				if (normalizedChannel !== item.channel) {
+					changed = true;
+					return Object.assign({}, item, { channel: normalizedChannel });
+				}
+				return item;
 			});
+			return { items: items, changed: changed };
 		}
 
 		function loadRecords(user) {
@@ -934,7 +981,11 @@
 				return [];
 			}
 			try {
-				return getCleanArray(JSON.parse(raw));
+				const cleaned = getCleanArray(JSON.parse(raw));
+				if (cleaned.changed) {
+					localStorage.setItem(getStorageKey(user), JSON.stringify(cleaned.items));
+				}
+				return cleaned.items;
 			} catch (error) {
 				return [];
 			}
@@ -946,7 +997,11 @@
 				return [];
 			}
 			try {
-				return getCleanArray(JSON.parse(raw));
+				const cleaned = getCleanArray(JSON.parse(raw));
+				if (cleaned.changed) {
+					localStorage.setItem(getExpiredStorageKey(user), JSON.stringify(cleaned.items));
+				}
+				return cleaned.items;
 			} catch (error) {
 				return [];
 			}
@@ -975,9 +1030,14 @@
 					});
 					return;
 				}
-				records = getCleanArray(data.records);
-				expiredRecords = getCleanArray(data.expiredRecords);
+				const cleanedRecords = getCleanArray(data.records);
+				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
+				records = cleanedRecords.items;
+				expiredRecords = cleanedExpiredRecords.items;
 				persistLocal();
+				if (cleanedRecords.changed || cleanedExpiredRecords.changed) {
+					syncCloudData();
+				}
 				renderRecords();
 				updateStats();
 			};
@@ -1270,6 +1330,15 @@
 			return typeof statusText === "string" && statusText.indexOf("已過期") === 0;
 		}
 
+		function archiveRecord(record, statusText) {
+			const archivedRecord = Object.assign({}, record, { status: statusText });
+			expiredRecords = [archivedRecord].concat(expiredRecords).filter(function (item, index, array) {
+				return array.findIndex(function (candidate) {
+					return candidate.id === item.id;
+				}) === index;
+			});
+		}
+
 		function moveExpiredRecordsToArchive() {
 			if (records.length === 0) {
 				return;
@@ -1288,10 +1357,8 @@
 				return;
 			}
 			records = active;
-			expiredRecords = moved.concat(expiredRecords).filter(function (record, index, array) {
-				return array.findIndex(function (candidate) {
-					return candidate.id === record.id;
-				}) === index;
+			moved.forEach(function (record) {
+				archiveRecord(record, record.status);
 			});
 			saveRecords();
 			saveExpiredRecords();
@@ -1300,10 +1367,12 @@
 		function renderExpiredRecords() {
 			expiredRecords.forEach(function (record) {
 				recalculateRecordTotals(record);
-				ensurePeriodData(record);
+				if (record.status !== "已消費") {
+					ensurePeriodData(record);
+				}
 			});
 			if (expiredRecords.length === 0) {
-				expiredRecordBody.innerHTML = "<tr><td colspan=\"8\">目前沒有已過期的消費券。</td></tr>";
+				expiredRecordBody.innerHTML = "<tr><td colspan=\"9\">目前沒有已使用或已過期的消費券。</td></tr>";
 				return;
 			}
 			expiredRecordBody.innerHTML = expiredRecords.map(function (record) {
@@ -1316,6 +1385,7 @@
 					+ "<td>" + record.voucher3 + "</td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
+					+ "<td>" + (record.status || "-") + "</td>"
 					+ "</tr>";
 			}).join("");
 		}
@@ -1328,7 +1398,7 @@
 				btn.classList.toggle("active", btn.getAttribute("data-user") === currentViewUser);
 			});
 			if (records.length === 0) {
-				recordBody.innerHTML = "<tr><td colspan=\"9\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
+				recordBody.innerHTML = "<tr><td colspan=\"8\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
 				listExpiryDate.textContent = "-";
 				listStatus.textContent = "-";
 				renderExpiredRecords();
@@ -1342,7 +1412,6 @@
 				ensurePeriodData(record);
 				const disabledAttr = canEditCurrentView() ? "" : " disabled";
 				return "<tr>"
-					+ "<td>" + (record.createdBy || currentViewUser) + "</td>"
 					+ "<td>" + getPhaseDisplay(record) + "</td>"
 					+ "<td>" + record.channel + "</td>"
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher1 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher1\"" + disabledAttr + ">✎</button></div></td>"
@@ -1350,7 +1419,7 @@
 					+ "<td><div class=\"amount-cell\"><span>" + record.voucher3 + "</span><button type=\"button\" class=\"edit-inline-btn edit-voucher-btn\" data-id=\"" + record.id + "\" data-field=\"voucher3\"" + disabledAttr + ">✎</button></div></td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
-					+ "<td><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">刪除</button></td>"
+					+ "<td><div class=\"action-cell\"><button type=\"button\" class=\"consume-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">已用</button><button type=\"button\" class=\"delete-btn\" data-id=\"" + record.id + "\"" + disabledAttr + ">刪</button></div></td>"
 					+ "</tr>";
 			}).join("");
 			const latestRecord = records[0];
@@ -1426,7 +1495,7 @@
 		loginForm.addEventListener("submit", function (event) {
 			event.preventDefault();
 			const username = loginUser.value.trim();
-			const password = loginPass.value;
+			const password = autoLoginPassword;
 			const matched = loginUsers.find(function (item) {
 				return item.username === username && item.password === password;
 			});
@@ -1435,7 +1504,6 @@
 				return;
 			}
 			loginError.textContent = "";
-			loginPass.value = "";
 			setLoginState({ username: matched.username, name: matched.name });
 		});
 
@@ -1591,10 +1659,28 @@
 				openEditChooser(id, field, normalizeNumber(record[field]));
 				return;
 			}
-			if (!target.classList.contains("delete-btn")) {
+			if (!canEditCurrentView()) {
 				return;
 			}
-			if (!canEditCurrentView()) {
+			if (target.classList.contains("consume-btn")) {
+				const consumeId = Number(target.getAttribute("data-id"));
+				const consumeRecord = records.find(function (record) { return record.id === consumeId; });
+				if (!consumeRecord) {
+					return;
+				}
+				records = records.filter(function (record) { return record.id !== consumeId; });
+				archiveRecord(consumeRecord, "已消費");
+				saveRecords();
+				saveExpiredRecords();
+				renderRecords();
+				updateStats();
+				hint.textContent = consumeRecord.channel + " 已標記為已消費。";
+				if (editingRecordId === consumeId) {
+					closeEditChooser();
+				}
+				return;
+			}
+			if (!target.classList.contains("delete-btn")) {
 				return;
 			}
 			const id = Number(target.getAttribute("data-id"));
@@ -1638,7 +1724,7 @@
 		expiredToggleBtn.addEventListener("click", function () {
 			const isOpen = expiredSection.classList.toggle("show");
 			expiredToggleBtn.setAttribute("aria-expanded", String(isOpen));
-			expiredToggleBtn.textContent = isOpen ? "收起已過期消費券" : "查看已過期消費券";
+			expiredToggleBtn.textContent = isOpen ? "收起已使用/已過期的消費券" : "查看已使用/已過期的消費券";
 			if (isOpen) {
 				renderExpiredRecords();
 			}
