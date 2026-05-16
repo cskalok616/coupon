@@ -44,13 +44,13 @@
 			background: var(--panel);
 			border: 1px solid var(--line);
 			border-radius: 18px;
-			padding: 12px;
+			padding: 0;
 			box-shadow: var(--shadow);
 		}
 
 		.banner-image {
 			width: 100%;
-			height: 220px;
+			height: 120px;
 			object-fit: cover;
 			border-radius: 14px;
 			display: block;
@@ -65,31 +65,6 @@
 			text-align: center;
 		}
 
-		.stats-box {
-			margin-top: 12px;
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 10px;
-		}
-
-		.stat-item {
-			padding: 14px;
-			background: var(--panel-soft);
-			border: 1px solid var(--line);
-			border-radius: 14px;
-		}
-
-		.stat-label {
-			display: block;
-			font-size: 0.82rem;
-			color: var(--muted);
-			margin-bottom: 6px;
-		}
-
-		.stat-value {
-			font-size: 1.3rem;
-			font-weight: 700;
-		}
 
 		.topbar {
 			display: flex;
@@ -223,11 +198,104 @@
 			display: block;
 		}
 
+		.chooser-backdrop {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(10, 22, 35, 0.38);
+			backdrop-filter: blur(2px);
+			z-index: 80;
+		}
+
+		.chooser-backdrop.show {
+			display: block;
+		}
+
 		.option-grid,
 		.chooser-grid {
 			display: flex;
 			gap: 8px;
 			flex-wrap: wrap;
+		}
+
+		.chooser-grid.action-menu {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 8px;
+		}
+
+		.chooser-grid.action-menu .chooser-btn {
+			width: 100%;
+			text-align: center;
+			padding: 10px 12px;
+			font-size: 1rem;
+		}
+
+		.chooser-grid.action-menu .chooser-btn {
+			display: flex !important;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 12px;
+		}
+
+		.chooser-grid.action-menu .chooser-btn.is-hidden,
+		.chooser-btn.is-hidden {
+			display: none !important;
+		}
+
+		.chooser-grid.action-menu .chooser-btn-label {
+			flex: 0 0 auto;
+			display: flex;
+			align-items: center;
+			min-height: 28px;
+			line-height: 1.2;
+		}
+
+		.chooser-btn-icon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 28px;
+			height: 28px;
+			line-height: 1;
+			flex: 0 0 28px;
+			align-self: center;
+		}
+
+		.chooser-btn-icon svg {
+			width: 100%;
+			height: 100%;
+			display: block;
+			stroke: currentColor;
+			fill: none;
+			stroke-width: 2.2;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+
+		.chooser-btn-icon.use {
+			color: #49b357;
+		}
+
+		.chooser-btn-icon.unuse {
+			color: #f08a00;
+		}
+
+		.chooser-btn-icon.reset-symbol {
+			font-size: 1.7rem;
+			font-weight: 500;
+		}
+
+		.chooser-btn-icon.edit {
+			color: #2d8cf0;
+		}
+
+		.chooser-btn-icon.delete {
+			color: #eb4335;
+		}
+
+		.chooser-btn-icon.close {
+			color: #8795a3;
 		}
 
 		.option-btn,
@@ -269,8 +337,14 @@
 			box-shadow: var(--shadow);
 		}
 
-		.record-section {
-			display: block;
+		.edit-chooser {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: min(320px, calc(100vw - 28px));
+			margin-bottom: 0;
+			z-index: 90;
 		}
 
 		.panel-title,
@@ -308,6 +382,384 @@
 			display: none;
 			margin-bottom: 14px;
 			text-align: right;
+		}
+
+		.channel-showcase {
+			margin-bottom: 14px;
+			padding: 10px 12px;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			box-shadow: var(--shadow);
+		}
+
+		.channel-overview {
+			display: flex;
+			align-items: center;
+			gap: 18px;
+			padding: 2px 0 10px;
+			margin-bottom: 2px;
+			color: #12304a;
+			font-size: 0.92rem;
+			font-weight: 600;
+			flex-wrap: wrap;
+		}
+
+		.channel-overview-row {
+			display: flex;
+			align-items: center;
+			gap: 18px;
+			width: 100%;
+		}
+
+		.channel-overview-row.in-showcase-summary {
+			justify-content: center;
+			padding: 2px 0 8px;
+		}
+
+		.channel-overview-item {
+			display: inline-flex;
+			align-items: baseline;
+			gap: 6px;
+		}
+
+		.channel-overview-item.expiry-item {
+			gap: 2px;
+		}
+
+		.channel-overview-item.status-only {
+			margin-right: -16px;
+		}
+
+		.channel-overview-item span {
+			font-size: 12px;
+		}
+
+		.channel-overview-row.in-showcase-summary .channel-overview-item span {
+			font-size: 14px;
+		}
+
+		.channel-overview-value {
+			font-size: 16px;
+			font-weight: 700;
+		}
+
+		.channel-overview-value.status-text {
+			font-size: 12px;
+		}
+
+		.channel-overview-value.summary-number {
+			font-size: 18px;
+			color: #138a36;
+		}
+
+		.channel-overview-row.in-showcase-summary .channel-overview-value.summary-number {
+			font-size: 20px;
+		}
+
+		.channel-overview-value.alert-text {
+			color: #d93025;
+		}
+
+		.channel-showcase-list {
+			display: grid;
+			gap: 5px;
+		}
+
+		.channel-showcase-item {
+			display: flex;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 12px;
+			padding: 4px 0;
+		}
+
+		.channel-showcase-item.is-hidden {
+			display: none;
+		}
+
+		.channel-showcase-item.all-used {
+			filter: grayscale(1);
+			opacity: 0.72;
+		}
+
+		.channel-restore-wrap {
+			display: none;
+			position: relative;
+			justify-content: center;
+			padding-top: 8px;
+		}
+
+		.channel-restore-wrap.show {
+			display: flex;
+		}
+
+		.channel-restore-wrap.is-open {
+			z-index: 2;
+		}
+
+		.channel-restore-btn {
+			width: 34px;
+			height: 34px;
+			border: 1px solid #d5e2ee;
+			border-radius: 999px;
+			background: #ffffff;
+			color: #18476b;
+			font-size: 1.4rem;
+			line-height: 1;
+			font-weight: 500;
+			cursor: pointer;
+		}
+
+		.channel-restore-list {
+			display: none;
+			position: absolute;
+			left: 50%;
+			bottom: calc(100% + 8px);
+			transform: translateX(-50%);
+			padding: 8px;
+			border: 1px solid #d5e2ee;
+			border-radius: 14px;
+			background: #ffffff;
+			box-shadow: 0 12px 28px rgba(17, 52, 83, 0.14);
+			gap: 8px;
+			align-items: center;
+		}
+
+		.channel-restore-wrap.is-open .channel-restore-list {
+			display: flex;
+		}
+
+		.channel-restore-choice {
+			width: 40px;
+			height: 40px;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			border-radius: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+		}
+
+		.channel-restore-choice:hover {
+			background: #f2f7fb;
+		}
+
+		.channel-restore-choice .channel-logo {
+			width: 32px;
+			height: 32px;
+			flex: 0 0 32px;
+		}
+
+		.channel-brand {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 3px;
+			width: 35px;
+			flex: 0 0 35px;
+		}
+
+		.channel-logo {
+			width: 35px;
+			height: 35px;
+			border-radius: 6px;
+			overflow: hidden;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1rem;
+			font-weight: 800;
+			letter-spacing: 0.02em;
+			flex: 0 0 35px;
+		}
+
+		.channel-logo-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+
+		.channel-logo.mpay {
+			background: #ff8904;
+			color: #ffffff;
+		}
+
+		.channel-logo.boc {
+			background: #d4142a;
+			color: #ffffff;
+		}
+
+		.channel-logo.icbc {
+			background: #c40017;
+			color: #ffffff;
+		}
+
+		.channel-logo.luso {
+			background: #6ac5ea;
+			color: #ffffff;
+		}
+
+		.channel-logo.tfb {
+			background: #ffd319;
+			color: #1b1b1b;
+		}
+
+		.channel-logo.gf {
+			background: #ffffff;
+			color: #d81224;
+			border: 1px solid #f0d6da;
+		}
+
+		.channel-logo.alipay {
+			background: #2378ef;
+			color: #ffffff;
+		}
+
+		.channel-logo.uepay {
+			background: #74d1e4;
+			color: #ffffff;
+		}
+
+		.channel-name {
+			font-size: 0.8rem;
+			font-weight: 400;
+			color: #12304a;
+			width: 35px;
+			text-align: center;
+			white-space: nowrap;
+		}
+
+		.channel-slot-list {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 55px;
+			flex-wrap: nowrap;
+			width: 181px;
+			flex: 0 0 181px;
+		}
+
+		.channel-slot-summary {
+			display: grid;
+			grid-template-columns: repeat(2, auto) 18px;
+			column-gap: 1px;
+			row-gap: 4px;
+			margin-left: -4px;
+			align-items: start;
+		}
+
+		.channel-summary-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			min-width: 56px;
+			color: #12304a;
+		}
+
+		.channel-summary-label {
+			font-size: 0.78rem;
+			font-weight: 500;
+			line-height: 1.2;
+		}
+
+		.channel-summary-value {
+			font-size: 1.3rem;
+			font-weight: 700;
+			line-height: 1.2;
+			margin-top: 3px;
+		}
+
+		.channel-summary-more {
+			grid-column: 3;
+			grid-row: 1 / span 2;
+			width: 18px;
+			height: 34px;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 3px;
+			cursor: default;
+		}
+
+		.channel-summary-dot {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: #7f8185;
+		}
+
+		.channel-summary-dot:nth-child(1) {
+			background: #eb4335;
+		}
+
+		.channel-summary-dot:nth-child(2) {
+			background: #fbbc05;
+		}
+
+		.channel-summary-dot:nth-child(3) {
+			background: #34a853;
+		}
+
+		.channel-placeholder {
+			width: 55px;
+			height: 55px;
+			border: 1px solid #d5e2ee;
+			border-radius: 8px;
+			background: #ffffff;
+			flex: 0 0 55px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 1px;
+			padding: 4px 2px;
+			color: #18476b;
+		}
+
+		.channel-value-box {
+			width: 55px;
+			height: 55px;
+			border: 1px solid #d5e2ee;
+			border-radius: 8px;
+			background: #ffffff;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: #18476b;
+			flex: 0 0 55px;
+		}
+
+		.channel-value-box.thank-you {
+			font-size: 1rem;
+		}
+
+		.channel-value-box.used {
+			background: #eef1f4;
+			border-color: #d7dde4;
+			color: #97a3af;
+		}
+
+		.channel-add-symbol {
+			font-size: 1rem;
+			font-weight: 700;
+			line-height: 1;
+		}
+
+		.channel-add-label {
+			font-size: 0.72rem;
+			font-weight: 600;
+			white-space: nowrap;
 		}
 
 		#finishBtn {
@@ -382,6 +834,20 @@
 		}
 
 		.readonly-note.show {
+			display: block;
+		}
+
+		.reminder-note {
+			margin-bottom: 12px;
+			padding: 10px 12px;
+			border-radius: 10px;
+			background: #fff1f1;
+			color: #9a2f2f;
+			font-size: 0.88rem;
+			display: none;
+		}
+
+		.reminder-note.show {
 			display: block;
 		}
 
@@ -606,7 +1072,6 @@
 				justify-content: flex-start;
 			}
 
-			.stats-box,
 			.record-meta,
 			.voucher-grid {
 				grid-template-columns: 1fr;
@@ -630,21 +1095,10 @@
 		<section class="banner-wrap" aria-label="活動橫幅">
 			<img id="topBanner" class="banner-image" src="./banner.jpg" alt="消費券活動橫幅" />
 			<div id="bannerFallback" class="banner-fallback">找不到圖片，請將橫幅檔案命名為 banner.jpg 並放在同一資料夾。</div>
-			<div class="stats-box">
-				<div class="stat-item">
-					<span class="stat-label">消費券總金額</span>
-					<strong class="stat-value" id="voucherLeft">MOP 0</strong>
-				</div>
-				<div class="stat-item">
-					<span class="stat-label">總消費額</span>
-					<strong class="stat-value" id="totalSpend">MOP 0</strong>
-				</div>
-			</div>
 		</section>
 
 		<div class="topbar">
 			<div class="title-block">
-				<h1>下面這個人抽到的消費券</h1>
 				<div class="member-switcher-wrap">
 					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
 						<button class="member-pill" type="button" data-user="樂">樂</button>
@@ -665,7 +1119,6 @@
 				<span id="currentViewTag" class="view-tag">目前檢視：樂</span>
 				<span id="currentUserTag" class="user-tag">未登入</span>
 				<button id="logoutBtn" type="button">登出</button>
-				<button id="addBtn" type="button" aria-expanded="false" aria-controls="menuPanel">新增</button>
 			</div>
 		</div>
 
@@ -729,6 +1182,7 @@
 		<section class="record-section">
 			<h2 class="record-title">記錄列表</h2>
 			<p id="hint" class="hint">請先登入後再操作。</p>
+			<div id="reminderNote" class="reminder-note"></div>
 			<div id="readonlyNote" class="readonly-note">目前正在查看其他帳號的列表，你只能檢視，不能修改或刪除。</div>
 			<div class="record-meta">
 				<div class="meta-item">
@@ -773,7 +1227,9 @@
 			</div>
 		</section>
 
-		<section id="editChooser" class="edit-chooser">
+		<div id="chooserBackdrop" class="chooser-backdrop"></div>
+
+		<section id="editChooser" class="edit-chooser" aria-modal="true" role="dialog">
 			<h2 id="chooserTitle" class="panel-title">修改金額</h2>
 			<div class="chooser-grid">
 				<button class="chooser-btn" type="button" data-value="0">無</button>
@@ -782,9 +1238,233 @@
 				<button class="chooser-btn" type="button" data-value="50">50</button>
 				<button class="chooser-btn" type="button" data-value="100">100</button>
 				<button class="chooser-btn" type="button" data-value="200">200</button>
+				<button class="chooser-btn" type="button" data-value="999">完成</button>
 			</div>
 			<div style="margin-top: 12px; text-align: right;">
 				<button id="chooserFinish" class="chooser-finish" type="button">套用</button>
+			</div>
+		</section>
+
+		<div class="channel-overview" aria-label="所有支付渠道總覽">
+				<div class="channel-overview-item expiry-item">
+					<span>到期日</span>
+					<strong id="currentPeriodExpiryValue" class="channel-overview-value alert-text">-</strong>
+				</div>
+				<div class="channel-overview-item status-only">
+					<strong id="allChannelStatusValue" class="channel-overview-value status-text">-</strong>
+				</div>
+				<div class="channel-overview-item">
+					<strong id="allChannelRemainingValue" class="channel-overview-value alert-text">-</strong>
+				</div>
+			</div>
+		<section class="channel-showcase" aria-label="支付渠道列表">
+			<div class="channel-overview-row in-showcase-summary">
+				<div class="channel-overview-item">
+					<span>消費券總金額</span>
+					<strong id="allChannelTotalValue" class="channel-overview-value summary-number">0</strong>
+				</div>
+				<div class="channel-overview-item">
+					<span>總需消費</span>
+					<strong id="allChannelRequiredValue" class="channel-overview-value summary-number">0</strong>
+				</div>
+			</div>
+			<div class="channel-showcase-list">
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo mpay"><img class="channel-logo-image" src="./MPay.webp" alt="Mpay logo" /></div>
+						<div class="channel-name">Mpay</div>
+					</div>
+					<div class="channel-slot-list" data-channel="Mpay">
+						<button class="channel-placeholder" type="button" data-channel="Mpay"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="Mpay">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo boc"><img class="channel-logo-image" src="./中銀.webp" alt="中銀 logo" /></div>
+						<div class="channel-name">中銀</div>
+					</div>
+					<div class="channel-slot-list" data-channel="中銀">
+						<button class="channel-placeholder" type="button" data-channel="中銀"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="中銀">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo icbc"><img class="channel-logo-image" src="./工商.webp" alt="工商 logo" /></div>
+						<div class="channel-name">工商</div>
+					</div>
+					<div class="channel-slot-list" data-channel="工商">
+						<button class="channel-placeholder" type="button" data-channel="工商"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="工商">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo luso"><img class="channel-logo-image" src="./國際.webp" alt="國際 logo" /></div>
+						<div class="channel-name">國際</div>
+					</div>
+					<div class="channel-slot-list" data-channel="國際">
+						<button class="channel-placeholder" type="button" data-channel="國際"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="國際">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo tfb"><img class="channel-logo-image" src="./豐付寶.webp" alt="豐付寶 logo" /></div>
+						<div class="channel-name">豐付寶</div>
+					</div>
+					<div class="channel-slot-list" data-channel="豐付寶">
+						<button class="channel-placeholder" type="button" data-channel="豐付寶"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="豐付寶">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo gf"><img class="channel-logo-image" src="./廣發.webp" alt="廣發 logo" /></div>
+						<div class="channel-name">廣發</div>
+					</div>
+					<div class="channel-slot-list" data-channel="廣發">
+						<button class="channel-placeholder" type="button" data-channel="廣發"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="廣發">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo alipay"><img class="channel-logo-image" src="./支付寶.webp" alt="支付寶 logo" /></div>
+						<div class="channel-name">支付寶</div>
+					</div>
+					<div class="channel-slot-list" data-channel="支付寶">
+						<button class="channel-placeholder" type="button" data-channel="支付寶"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="支付寶">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+				<div class="channel-showcase-item">
+					<div class="channel-brand">
+						<div class="channel-logo uepay"><img class="channel-logo-image" src="./UePay.webp" alt="UEpay logo" /></div>
+						<div class="channel-name">UEpay</div>
+					</div>
+					<div class="channel-slot-list" data-channel="UEpay">
+						<button class="channel-placeholder" type="button" data-channel="UEpay"><span class="channel-add-symbol">+</span><span class="channel-add-label">添加</span></button>
+					</div>
+					<div class="channel-slot-summary" data-channel-summary="UEpay">
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">總金額</div>
+							<div class="channel-summary-value" data-summary-value="total">0</div>
+						</div>
+						<div class="channel-summary-item">
+							<div class="channel-summary-label">需消費</div>
+							<div class="channel-summary-value" data-summary-value="required">0</div>
+						</div>
+						<button class="channel-summary-more" type="button" aria-label="更多選項">
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+							<span class="channel-summary-dot"></span>
+						</button>
+					</div>
+				</div>
+			</div>
+			<div id="channelRestoreWrap" class="channel-restore-wrap">
+				<button id="channelRestoreBtn" class="channel-restore-btn" type="button" aria-label="顯示已隱藏的支付渠道">+</button>
+				<div id="channelRestoreList" class="channel-restore-list" aria-label="已隱藏支付渠道"></div>
 			</div>
 		</section>
 
@@ -797,7 +1477,6 @@
 			<div class="table-wrap">
 				<table>
 					<colgroup>
-						<col class="col-created-by" />
 						<col class="col-phase" />
 						<col class="col-channel" />
 						<col class="col-voucher" />
@@ -809,14 +1488,13 @@
 					</colgroup>
 					<thead>
 						<tr>
-							<th>建立者</th>
-							<th>期數</th>
+							<th>期</th>
 							<th>渠道</th>
 							<th>券一</th>
 							<th>券二</th>
 							<th>券三</th>
 							<th>券總額</th>
-							<th>總消費額</th>
+							<th>總消費</th>
 							<th>狀態</th>
 						</tr>
 					</thead>
@@ -843,6 +1521,7 @@
 		const cloudRootPath = "voucher_app/group_shared";
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
+		const reminderStorageKeyPrefix = "voucherReminderV1_";
 		const maxRecords = 8;
 		const autoLoginPassword = "123456";
 
@@ -893,23 +1572,41 @@
 		const finishWrap = document.getElementById("finishWrap");
 		const finishBtn = document.getElementById("finishBtn");
 		const cancelBtn = document.getElementById("cancelBtn");
-		const voucherLeftEl = document.getElementById("voucherLeft");
-		const totalSpendEl = document.getElementById("totalSpend");
 		const hint = document.getElementById("hint");
+		const reminderNote = document.getElementById("reminderNote");
 		const readonlyNote = document.getElementById("readonlyNote");
 		const listOwner = document.getElementById("listOwner");
 		const listExpiryDate = document.getElementById("listExpiryDate");
 		const listStatus = document.getElementById("listStatus");
 		const recordBody = document.getElementById("recordBody");
 		const editChooser = document.getElementById("editChooser");
+		const chooserBackdrop = document.getElementById("chooserBackdrop");
 		const chooserTitle = document.getElementById("chooserTitle");
+		const chooserGrid = editChooser.querySelector(".chooser-grid");
 		const chooserButtons = Array.from(document.querySelectorAll(".chooser-btn"));
 		const chooserFinish = document.getElementById("chooserFinish");
+		const channelShowcaseList = document.querySelector(".channel-showcase-list");
+		const allChannelStatusValue = document.getElementById("allChannelStatusValue");
+		const allChannelRemainingValue = document.getElementById("allChannelRemainingValue");
+		const currentPeriodExpiryValue = document.getElementById("currentPeriodExpiryValue");
+		const allChannelTotalValue = document.getElementById("allChannelTotalValue");
+		const allChannelRequiredValue = document.getElementById("allChannelRequiredValue");
+		const channelRestoreWrap = document.getElementById("channelRestoreWrap");
+		const channelRestoreBtn = document.getElementById("channelRestoreBtn");
+		const channelRestoreList = document.getElementById("channelRestoreList");
 		const expiredToggleBtn = document.getElementById("expiredToggleBtn");
 		const expiredSection = document.getElementById("expiredSection");
 		const expiredRecordBody = document.getElementById("expiredRecordBody");
 
 		let selectedChannel = "";
+		let chooserMode = "edit";
+		let pendingChannelAdd = "";
+		let pendingChannelAction = null;
+		let pendingChannelSummary = "";
+		let channelSelections = {};
+		let channelSelectionPeriods = {};
+		let hiddenChannelItems = {};
+		let channelRestorePickerOpen = false;
 		let editingRecordId = null;
 		let editingField = "";
 		let editingValue = 0;
@@ -932,6 +1629,7 @@
 			"支付寶(澳門)": "支付寶",
 			"大豐 豐付寶": "豐付寶"
 		};
+		const channelNames = ["Mpay", "中銀", "工商", "國際", "豐付寶", "廣發", "支付寶", "UEpay"];
 
 		function canEditCurrentView() {
 			if (!currentUser) {
@@ -950,6 +1648,463 @@
 
 		function getExpiredStorageKey(user) {
 			return expiredStorageKeyPrefix + user;
+		}
+
+		function getReminderStorageKey(user) {
+			return reminderStorageKeyPrefix + user;
+		}
+
+		function getChannelSelectionState(user) {
+			if (!channelSelections[user]) {
+				channelSelections[user] = {};
+			}
+			return channelSelections[user];
+		}
+
+		function getChannelSelectionList(channelName) {
+			const userState = getChannelSelectionState(currentViewUser);
+			if (!userState[channelName]) {
+				userState[channelName] = [];
+			}
+			return userState[channelName];
+		}
+
+		function getChannelSelectionPeriodState(user) {
+			if (!channelSelectionPeriods[user]) {
+				channelSelectionPeriods[user] = {};
+			}
+			return channelSelectionPeriods[user];
+		}
+
+		function getChannelPeriodMeta(channelName) {
+			return getChannelSelectionPeriodState(currentViewUser)[channelName] || null;
+		}
+
+		function setChannelPeriodMeta(channelName, referenceDate) {
+			const date = referenceDate instanceof Date ? referenceDate : new Date();
+			const periodInfo = getPeriodInfoByDate(date);
+			if (!periodInfo) {
+				return null;
+			}
+			const periodState = getChannelSelectionPeriodState(currentViewUser);
+			const phaseStartDate = formatDate(new Date(date.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay));
+			const expiryDate = formatDate(new Date(date.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay));
+			periodState[channelName] = {
+				phaseLabel: periodInfo.label,
+				phaseStartDate: phaseStartDate,
+				expiryDate: expiryDate
+			};
+			return periodState[channelName];
+		}
+
+		function clearChannelPeriodMeta(channelName) {
+			const periodState = getChannelSelectionPeriodState(currentViewUser);
+			delete periodState[channelName];
+		}
+
+		function ensureChannelPeriodMeta(channelName) {
+			const values = getChannelSelectionList(channelName);
+			if (!values.length) {
+				clearChannelPeriodMeta(channelName);
+				return null;
+			}
+			return getChannelPeriodMeta(channelName) || setChannelPeriodMeta(channelName, new Date());
+		}
+
+		function isPastChannelExpiry(expiryDateStr) {
+			if (typeof expiryDateStr !== "string" || !expiryDateStr) {
+				return false;
+			}
+			const expiryTime = new Date(expiryDateStr + "T23:59:59");
+			if (Number.isNaN(expiryTime.getTime())) {
+				return false;
+			}
+			return Date.now() > expiryTime.getTime();
+		}
+
+		function getHiddenChannelItemState(user) {
+			if (!hiddenChannelItems[user]) {
+				hiddenChannelItems[user] = {};
+			}
+			return hiddenChannelItems[user];
+		}
+
+		function getChannelShowcaseItem(channelName) {
+			const slotList = document.querySelector('.channel-slot-list[data-channel="' + channelName + '"]');
+			return slotList ? slotList.closest('.channel-showcase-item') : null;
+		}
+
+		function getHiddenChannelNames() {
+			const hiddenState = getHiddenChannelItemState(currentViewUser);
+			return Object.keys(hiddenState).filter(function (channelName) {
+				return hiddenState[channelName];
+			});
+		}
+
+		function closeChannelRestorePicker() {
+			channelRestorePickerOpen = false;
+			channelRestoreWrap.classList.remove('is-open');
+			channelRestoreBtn.setAttribute('aria-expanded', 'false');
+		}
+
+		function renderChannelRestoreChoices() {
+			const hiddenChannels = getHiddenChannelNames();
+			channelRestoreList.innerHTML = hiddenChannels.map(function (channelName) {
+				const channelItem = getChannelShowcaseItem(channelName);
+				const logo = channelItem ? channelItem.querySelector('.channel-logo') : null;
+				return '<button class="channel-restore-choice" type="button" data-restore-channel="' + channelName + '" aria-label="顯示 ' + channelName + '" title="' + channelName + '">' + (logo ? logo.outerHTML : channelName) + '</button>';
+			}).join('');
+		}
+
+		function updateChannelRestoreButton() {
+			const hasHiddenChannels = getHiddenChannelNames().length > 0;
+			channelRestoreWrap.classList.toggle('show', hasHiddenChannels);
+			channelRestoreBtn.setAttribute('aria-expanded', channelRestorePickerOpen && hasHiddenChannels ? 'true' : 'false');
+			if (!hasHiddenChannels) {
+				closeChannelRestorePicker();
+				channelRestoreList.innerHTML = '';
+				return;
+			}
+			if (channelRestorePickerOpen) {
+				renderChannelRestoreChoices();
+			}
+		}
+
+		function setChannelHidden(channelName, hidden) {
+			const hiddenState = getHiddenChannelItemState(currentViewUser);
+			hiddenState[channelName] = Boolean(hidden);
+			const channelItem = getChannelShowcaseItem(channelName);
+			if (channelItem) {
+				channelItem.classList.toggle('is-hidden', Boolean(hidden));
+			}
+			updateChannelRestoreButton();
+		}
+
+		function applyChannelVisibility() {
+			const hiddenState = getHiddenChannelItemState(currentViewUser);
+			document.querySelectorAll('.channel-slot-list[data-channel]').forEach(function (slotList) {
+				const channelName = slotList.getAttribute('data-channel') || '';
+				const channelItem = slotList.closest('.channel-showcase-item');
+				if (channelItem) {
+					channelItem.classList.toggle('is-hidden', Boolean(hiddenState[channelName]));
+				}
+			});
+			updateChannelRestoreButton();
+		}
+
+		function restoreHiddenChannel(channelName) {
+			setChannelHidden(channelName, false);
+			if (!getHiddenChannelNames().length) {
+				closeChannelRestorePicker();
+				return;
+			}
+			renderChannelRestoreChoices();
+		}
+
+		function getChannelAddButtonMarkup(channelName) {
+			return "<button class=\"channel-placeholder\" type=\"button\" data-channel=\"" + channelName + "\"><span class=\"channel-add-symbol\">+</span><span class=\"channel-add-label\">添加</span></button>";
+		}
+
+		function normalizeChannelSlotEntry(entry) {
+			if (entry && typeof entry === "object") {
+				return {
+					value: Number(entry.value || 0),
+					used: Boolean(entry.used)
+				};
+			}
+			return {
+				value: Number(entry || 0),
+				used: false
+			};
+		}
+
+		function getChannelSlotEntry(channelName, slotIndex) {
+			const values = getChannelSelectionList(channelName);
+			const normalizedEntry = normalizeChannelSlotEntry(values[slotIndex]);
+			values[slotIndex] = normalizedEntry;
+			return normalizedEntry;
+		}
+
+		function updateChannelSummary(channelName) {
+			const summary = document.querySelector('[data-channel-summary="' + channelName + '"]');
+			if (!summary) {
+				return;
+			}
+			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
+			const total = values.reduce(function (sum, entry) {
+				return sum + (entry.used ? 0 : entry.value);
+			}, 0);
+			const totalNode = summary.querySelector('[data-summary-value="total"]');
+			const requiredNode = summary.querySelector('[data-summary-value="required"]');
+			if (totalNode) {
+				totalNode.textContent = String(total);
+			}
+			if (requiredNode) {
+				requiredNode.textContent = String(total * 3);
+			}
+		}
+
+		function updateAllChannelSummary() {
+			const total = channelNames.reduce(function (sum, channelName) {
+				const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
+				return sum + values.reduce(function (channelSum, entry) {
+					return channelSum + (entry.used ? 0 : entry.value);
+				}, 0);
+			}, 0);
+			if (allChannelTotalValue) {
+				allChannelTotalValue.textContent = String(total);
+			}
+			if (allChannelRequiredValue) {
+				allChannelRequiredValue.textContent = String(total * 3);
+			}
+		}
+
+		function parseOverviewStatus(statusText) {
+			if (typeof statusText !== "string" || !statusText || statusText === "-") {
+				return { status: "-", remaining: "-" };
+			}
+			const match = statusText.match(/^(.+?)（(剩餘 .+)）$/);
+			if (!match) {
+				return { status: statusText, remaining: "-" };
+			}
+			return {
+				status: match[1],
+				remaining: match[2].replace(/^剩餘\s*/, "剩 ")
+			};
+		}
+
+		function updateCurrentPeriodExpiry() {
+			const today = new Date();
+			const periodInfo = getPeriodInfoByDate(today);
+			if (!currentPeriodExpiryValue) {
+				return;
+			}
+			if (!periodInfo) {
+				currentPeriodExpiryValue.textContent = "-";
+				return;
+			}
+			currentPeriodExpiryValue.textContent = formatMonthDay(formatDate(new Date(today.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay)));
+		}
+
+		function updateChannelOverviewStatus() {
+			const today = new Date();
+			const periodInfo = getPeriodInfoByDate(today);
+			const periodStatus = periodInfo
+				? getStatus(
+					formatDate(new Date(today.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay)),
+					formatDate(new Date(today.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay))
+				)
+				: "-";
+			const overviewStatus = parseOverviewStatus(periodStatus);
+			if (allChannelStatusValue) {
+				allChannelStatusValue.textContent = overviewStatus.status;
+			}
+			if (allChannelRemainingValue) {
+				allChannelRemainingValue.textContent = overviewStatus.remaining;
+			}
+			updateCurrentPeriodExpiry();
+		}
+
+		function updateChannelUsedState(channelName) {
+			const slotList = document.querySelector('.channel-slot-list[data-channel="' + channelName + '"]');
+			if (!slotList) {
+				return;
+			}
+			const channelItem = slotList.closest('.channel-showcase-item');
+			if (!channelItem) {
+				return;
+			}
+			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
+			const allUsed = values.length > 0 && values.every(function (entry) {
+				return entry.used;
+			});
+			channelItem.classList.toggle('all-used', allUsed);
+		}
+
+		function renderChannelSlots(channelName) {
+			const slotList = document.querySelector('.channel-slot-list[data-channel="' + channelName + '"]');
+			if (!slotList) {
+				return;
+			}
+			const values = getChannelSelectionList(channelName);
+			slotList.innerHTML = values.map(function (entry, index) {
+				const slotEntry = normalizeChannelSlotEntry(entry);
+				values[index] = slotEntry;
+				return "<button class=\"channel-value-box" + (slotEntry.value === 0 ? " thank-you" : "") + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\">" + (slotEntry.value === 0 ? "謝謝參與" : slotEntry.value) + "</button>";
+			}).join("") + (values.length < 3 ? getChannelAddButtonMarkup(channelName) : "");
+			updateChannelSummary(channelName);
+			updateChannelUsedState(channelName);
+			updateAllChannelSummary();
+		}
+
+		function renderAllChannelSlots() {
+			moveExpiredChannelSelectionsToArchive();
+			channelNames.forEach(function (channelName) {
+				renderChannelSlots(channelName);
+			});
+		}
+
+		function applyChannelAddSelection(channelName, value) {
+			const values = getChannelSelectionList(channelName);
+			if (values.length >= 3) {
+				hint.textContent = channelName + " 最多只能添加 3 格。";
+				closeEditChooser();
+				return true;
+			}
+			values.push({ value: Number(value || 0), used: false });
+			ensureChannelPeriodMeta(channelName);
+			renderChannelSlots(channelName);
+			hint.textContent = "已為 " + channelName + " 添加 " + (value === 0 ? "無" : value) + " 券。";
+			return values.length >= 3;
+		}
+
+		function setChannelSlotUsed(channelName, slotIndex, used) {
+			const values = getChannelSelectionList(channelName);
+			if (slotIndex < 0 || slotIndex >= values.length) {
+				return false;
+			}
+			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
+			slotEntry.used = used;
+			renderChannelSlots(channelName);
+			return true;
+		}
+
+		function setChannelSlotValue(channelName, slotIndex, value) {
+			const values = getChannelSelectionList(channelName);
+			if (slotIndex < 0 || slotIndex >= values.length) {
+				return false;
+			}
+			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
+			slotEntry.value = Number(value || 0);
+			ensureChannelPeriodMeta(channelName);
+			renderChannelSlots(channelName);
+			return true;
+		}
+
+		function setAllChannelSlotsUsed(channelName, used) {
+			const values = getChannelSelectionList(channelName);
+			if (values.length === 0) {
+				return false;
+			}
+			let changed = false;
+			values.forEach(function (entry, index) {
+				const slotEntry = normalizeChannelSlotEntry(entry);
+				if (slotEntry.used !== used) {
+					changed = true;
+				}
+				slotEntry.used = used;
+				values[index] = slotEntry;
+			});
+			renderChannelSlots(channelName);
+			return changed;
+		}
+
+		function buildChannelArchiveRecord(channelName, statusText, periodMeta) {
+			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
+			if (values.length === 0) {
+				return null;
+			}
+			const now = new Date();
+			const createdDate = formatDate(now);
+			const meta = periodMeta || ensureChannelPeriodMeta(channelName);
+			const periodInfo = getPeriodInfoByDate(now);
+			const voucher1 = values[0] ? values[0].value : 0;
+			const voucher2 = values[1] ? values[1].value : 0;
+			const voucher3 = values[2] ? values[2].value : 0;
+			const voucherTotal = voucher1 + voucher2 + voucher3;
+			const phaseLabel = meta && meta.phaseLabel ? meta.phaseLabel : (periodInfo ? periodInfo.label : "-");
+			const phaseStartDate = meta && meta.phaseStartDate
+				? meta.phaseStartDate
+				: (periodInfo ? formatDate(new Date(now.getFullYear(), periodInfo.startMonth - 1, periodInfo.startDay)) : createdDate);
+			const expiryDate = meta && meta.expiryDate
+				? meta.expiryDate
+				: (periodInfo ? formatDate(new Date(now.getFullYear(), periodInfo.expiryMonth - 1, periodInfo.expiryDay)) : formatDate(addDays(now, 180)));
+
+			return {
+				id: Date.now(),
+				createdBy: currentUser ? currentUser.name : currentViewUser,
+				phaseLabel: phaseLabel,
+				phaseStartDate: phaseStartDate,
+				channel: channelName,
+				createdDate: createdDate,
+				voucher1: voucher1,
+				voucher2: voucher2,
+				voucher3: voucher3,
+				voucherTotal: voucherTotal,
+				spendingTotal: voucherTotal * 3,
+				expiryDate: expiryDate,
+				status: statusText
+			};
+		}
+
+		function moveExpiredChannelSelectionsToArchive() {
+			let moved = false;
+			channelNames.forEach(function (channelName) {
+				const values = getChannelSelectionList(channelName);
+				if (!values.length) {
+					clearChannelPeriodMeta(channelName);
+					return;
+				}
+				const periodMeta = ensureChannelPeriodMeta(channelName);
+				if (!periodMeta || !isPastChannelExpiry(periodMeta.expiryDate)) {
+					return;
+				}
+				const archivedRecord = buildChannelArchiveRecord(channelName, "已過期", periodMeta);
+				if (archivedRecord) {
+					archiveRecord(archivedRecord, "已過期");
+					moved = true;
+				}
+				values.length = 0;
+				clearChannelPeriodMeta(channelName);
+			});
+			if (moved) {
+				saveExpiredRecords();
+			}
+		}
+
+		function resetChannelSlots(channelName) {
+			const values = getChannelSelectionList(channelName);
+			if (values.length === 0) {
+				return false;
+			}
+			values.length = 0;
+			clearChannelPeriodMeta(channelName);
+			renderChannelSlots(channelName);
+			return true;
+		}
+
+		function hideChannelItem(channelName) {
+			resetChannelSlots(channelName);
+			setChannelHidden(channelName, true);
+			return true;
+		}
+
+
+		function deleteChannelSlot(channelName, slotIndex) {
+			const values = getChannelSelectionList(channelName);
+			if (slotIndex < 0 || slotIndex >= values.length) {
+				return false;
+			}
+			values.splice(slotIndex, 1);
+			renderChannelSlots(channelName);
+			return true;
+		}
+
+		function loadReminderFlags(user) {
+			const raw = localStorage.getItem(getReminderStorageKey(user));
+			if (!raw) {
+				return {};
+			}
+			try {
+				const parsed = JSON.parse(raw);
+				return parsed && typeof parsed === "object" ? parsed : {};
+			} catch (error) {
+				return {};
+			}
+		}
+
+		function saveReminderFlags(user, flags) {
+			localStorage.setItem(getReminderStorageKey(user), JSON.stringify(flags));
 		}
 
 		function normalizeChannelName(channel) {
@@ -1110,25 +2265,116 @@
 		}
 
 		function verifySummaryConsistency() {
-			const expected = calculateSummaryFromRecords();
-			const shownVoucher = parseMopAmount(voucherLeftEl.textContent);
-			const shownSpending = parseMopAmount(totalSpendEl.textContent);
-			if (shownVoucher !== expected.voucherSum) {
-				voucherLeftEl.textContent = "MOP " + expected.voucherSum;
-			}
-			if (shownSpending !== expected.spendingSum) {
-				totalSpendEl.textContent = "MOP " + expected.spendingSum;
-			}
+			calculateSummaryFromRecords();
 		}
 
 		function updateStats() {
-			const summary = calculateSummaryFromRecords();
-			voucherLeftEl.textContent = "MOP " + summary.voucherSum;
-			totalSpendEl.textContent = "MOP " + summary.spendingSum;
-			addBtn.disabled = !(currentUser && canEditCurrentView());
+			calculateSummaryFromRecords();
+			if (addBtn) {
+				addBtn.disabled = !(currentUser && canEditCurrentView());
+			}
 			finishBtn.disabled = !(selectedChannel && currentUser && canEditCurrentView());
 			readonlyNote.classList.toggle("show", Boolean(currentUser) && !canEditCurrentView());
 			verifySummaryConsistency();
+		}
+
+		function requestNotificationPermission() {
+			if (typeof Notification === "undefined") {
+				return Promise.resolve("unsupported");
+			}
+			if (Notification.permission !== "default") {
+				return Promise.resolve(Notification.permission);
+			}
+			return Notification.requestPermission();
+		}
+
+		function showReminderMessages(messages) {
+			if (!reminderNote) {
+				return;
+			}
+			if (!messages.length) {
+				reminderNote.textContent = "";
+				reminderNote.classList.remove("show");
+				return;
+			}
+			reminderNote.textContent = "自動提醒：" + messages.join("；");
+			reminderNote.classList.add("show");
+		}
+
+		function buildReminderTime(expiryDateStr, dayOffset) {
+			const reminderDate = parseDateString(expiryDateStr);
+			if (!reminderDate) {
+				return null;
+			}
+			reminderDate.setDate(reminderDate.getDate() + dayOffset);
+			reminderDate.setHours(12, 0, 0, 0);
+			return reminderDate;
+		}
+
+		function notifyReminder(title, message, tag) {
+			if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+				return;
+			}
+			new Notification(title, {
+				body: message,
+				tag: tag
+			});
+		}
+
+		function checkAutoReminders() {
+			if (!currentUser || !currentViewUser) {
+				showReminderMessages([]);
+				return;
+			}
+			const now = new Date();
+			const reminderFlags = loadReminderFlags(currentViewUser);
+			const dueMessages = [];
+			const pendingNotifications = [];
+			let flagsChanged = false;
+			const reminderConfigs = [
+				{ key: "day-before", offset: -1, label: "明天到期" },
+				{ key: "same-day", offset: 0, label: "今天到期" }
+			];
+
+			records.forEach(function (record) {
+				ensurePeriodData(record);
+				if (!record.expiryDate || isExpiredStatus(record.status)) {
+					return;
+				}
+				reminderConfigs.forEach(function (config) {
+					const reminderTime = buildReminderTime(record.expiryDate, config.offset);
+					if (!reminderTime || now < reminderTime) {
+						return;
+					}
+					const reminderDayEnd = new Date(reminderTime);
+					reminderDayEnd.setDate(reminderDayEnd.getDate() + 1);
+					if (now >= reminderDayEnd) {
+						return;
+					}
+					const reminderDayKey = formatDate(reminderTime);
+					const reminderFlagKey = record.id + ":" + config.key + ":" + reminderDayKey;
+					const message = currentViewUser + " 的 " + record.channel + " " + config.label + "（到期日 " + record.expiryDate + "）";
+					dueMessages.push(message);
+					if (reminderFlags[reminderFlagKey]) {
+						return;
+					}
+					reminderFlags[reminderFlagKey] = Date.now();
+					flagsChanged = true;
+					pendingNotifications.push({
+						title: "消費券提醒",
+						message: message,
+						tag: reminderFlagKey
+					});
+				});
+			});
+
+			showReminderMessages(dueMessages);
+			if (flagsChanged) {
+				saveReminderFlags(currentViewUser, reminderFlags);
+			}
+			pendingNotifications.forEach(function (item) {
+				notifyReminder(item.title, item.message, item.tag);
+			});
 		}
 
 		function formatDate(date) {
@@ -1265,7 +2511,7 @@
 			if (Number.isNaN(month) || Number.isNaN(day)) {
 				return dateStr;
 			}
-			return month + "/" + day;
+			return String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
 		}
 
 		function getPhaseDisplay(record) {
@@ -1305,7 +2551,15 @@
 		}
 
 		function closeEditChooser() {
+			chooserBackdrop.classList.remove("show");
 			editChooser.classList.remove("show");
+			chooserGrid.classList.remove("action-menu");
+			chooserMode = "edit";
+			pendingChannelAdd = "";
+			pendingChannelAction = null;
+			pendingChannelSummary = "";
+			chooserFinish.textContent = "套用";
+			chooserFinish.style.display = "inline-block";
 			editingRecordId = null;
 			editingField = "";
 			editingValue = 0;
@@ -1314,10 +2568,43 @@
 			});
 		}
 
+		function setChooserOptions(values) {
+			chooserButtons.forEach(function (btn, index) {
+				const option = values[index];
+				if (!option) {
+					btn.style.display = "";
+					btn.classList.add("is-hidden");
+					return;
+				}
+				btn.style.display = "inline-block";
+				btn.classList.remove("is-hidden");
+				btn.setAttribute("data-value", String(option.value));
+				if (option.icon) {
+					btn.innerHTML = "<span class=\"chooser-btn-icon" + (option.iconClass ? " " + option.iconClass : "") + "\">" + option.icon + "</span><span class=\"chooser-btn-label\">" + option.label + "</span>";
+				} else {
+					btn.textContent = option.label;
+				}
+				btn.classList.remove("selected");
+			});
+		}
+
 		function openEditChooser(recordId, field, currentValue) {
 			if (!canEditCurrentView()) {
 				return;
 			}
+			chooserGrid.classList.remove("action-menu");
+			chooserMode = "edit";
+			pendingChannelAdd = "";
+			chooserFinish.textContent = "套用";
+			chooserFinish.style.display = "inline-block";
+			setChooserOptions([
+				{ value: 0, label: "無" },
+				{ value: 10, label: "10" },
+				{ value: 20, label: "20" },
+				{ value: 50, label: "50" },
+				{ value: 100, label: "100" },
+				{ value: 200, label: "200" }
+			]);
 			editingRecordId = recordId;
 			editingField = field;
 			editingValue = currentValue;
@@ -1325,6 +2612,135 @@
 			chooserButtons.forEach(function (btn) {
 				btn.classList.toggle("selected", Number(btn.getAttribute("data-value")) === currentValue);
 			});
+			chooserBackdrop.classList.add("show");
+			editChooser.classList.add("show");
+		}
+
+		function openChannelAddChooser(channelName) {
+			if (!currentUser) {
+				hint.textContent = "請先登入後再新增記錄。";
+				return;
+			}
+			if (!canEditCurrentView()) {
+				hint.textContent = "你只能修改自己帳號的記錄列表。";
+				return;
+			}
+			if (getChannelSelectionList(channelName).length >= 3) {
+				hint.textContent = channelName + " 已經選滿 3 格。";
+				return;
+			}
+			chooserGrid.classList.remove("action-menu");
+			chooserMode = "channel-add";
+			pendingChannelAdd = channelName;
+			editingRecordId = null;
+			editingField = "";
+			editingValue = 0;
+			chooserTitle.textContent = "為 " + channelName + " 添加券";
+			chooserFinish.textContent = "完成";
+			chooserFinish.style.display = "inline-block";
+			setChooserOptions([
+				{ value: 200, label: "200" },
+				{ value: 100, label: "100" },
+				{ value: 50, label: "50" },
+				{ value: 20, label: "20" },
+				{ value: 10, label: "10" },
+				{ value: 0, label: "謝謝參與" }
+			]);
+			chooserBackdrop.classList.add("show");
+			editChooser.classList.add("show");
+		}
+
+		function openChannelActionChooser(channelName, slotIndex, value) {
+			if (!currentUser) {
+				hint.textContent = "請先登入後再操作。";
+				return;
+			}
+			if (!canEditCurrentView()) {
+				hint.textContent = "你只能修改自己帳號的記錄列表。";
+				return;
+			}
+			chooserGrid.classList.add("action-menu");
+			chooserMode = "channel-action";
+			pendingChannelAdd = "";
+			pendingChannelAction = {
+				channelName: channelName,
+				slotIndex: slotIndex,
+				value: value,
+				used: getChannelSlotEntry(channelName, slotIndex).used
+			};
+			editingRecordId = null;
+			editingField = "";
+			editingValue = 0;
+			chooserTitle.textContent = channelName + " 的券 " + (value === 0 ? "無" : value);
+			chooserFinish.style.display = "none";
+			setChooserOptions([
+				{ value: 1, label: "標記為已使用", iconClass: "use", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5 10.8 15.3 16.2 8.7"></path></svg>' },
+				{ value: 2, label: "標記為未使用", iconClass: "unuse", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.8"></circle><path d="M12 3.5v3.2M12 17.3v3.2M3.5 12h3.2M17.3 12h3.2"></path><circle cx="12" cy="12" r="8.5"></circle></svg>' },
+				{ value: 3, label: "修改券的金額", iconClass: "edit", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5h4l9.4-9.4a1.9 1.9 0 0 0 0-2.7l-1.3-1.3a1.9 1.9 0 0 0-2.7 0L4.5 15.5v4z"></path><path d="M13 7l4 4"></path></svg>' },
+				{ value: 4, label: "刪除", iconClass: "delete", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 7.5h13"></path><path d="M9 7.5V5.8c0-.7.6-1.3 1.3-1.3h3.4c.7 0 1.3.6 1.3 1.3v1.7"></path><path d="M7.5 7.5v11c0 .8.7 1.5 1.5 1.5h6c.8 0 1.5-.7 1.5-1.5v-11"></path></svg>' },
+				{ value: 5, label: "冇嘢改了", iconClass: "close", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>' }
+			]);
+			chooserBackdrop.classList.add("show");
+			editChooser.classList.add("show");
+		}
+
+		function openChannelSummaryChooser(channelName) {
+			if (!currentUser) {
+				hint.textContent = "請先登入後再操作。";
+				return;
+			}
+			if (!canEditCurrentView()) {
+				hint.textContent = "你只能修改自己帳號的記錄列表。";
+				return;
+			}
+			chooserGrid.classList.add("action-menu");
+			chooserMode = "channel-summary-action";
+			pendingChannelAdd = "";
+			pendingChannelAction = null;
+			pendingChannelSummary = channelName;
+			editingRecordId = null;
+			editingField = "";
+			editingValue = 0;
+			chooserTitle.textContent = channelName + " 更多選項";
+			chooserFinish.style.display = "none";
+			setChooserOptions([
+				{ value: 1, label: "全部標記為已使用", iconClass: "use", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5 10.8 15.3 16.2 8.7"></path></svg>' },
+				{ value: 2, label: "重置整筆消費券", iconClass: "unuse reset-symbol", icon: '&#x21BB;' },
+				{ value: 3, label: "刪除支付渠道", iconClass: "delete", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 7.5h13"></path><path d="M9 7.5V5.8c0-.7.6-1.3 1.3-1.3h3.4c.7 0 1.3.6 1.3 1.3v1.7"></path><path d="M7.5 7.5v11c0 .8.7 1.5 1.5 1.5h6c.8 0 1.5-.7 1.5-1.5v-11"></path></svg>' },
+				{ value: 4, label: "冇嘢改了", iconClass: "close", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>' }
+			]);
+			chooserBackdrop.classList.add("show");
+			editChooser.classList.add("show");
+		}
+
+		function openChannelValueEditChooser(channelName, slotIndex) {
+			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
+			chooserGrid.classList.remove("action-menu");
+			chooserMode = "channel-edit-value";
+			pendingChannelAdd = "";
+			pendingChannelAction = {
+				channelName: channelName,
+				slotIndex: slotIndex,
+				value: slotEntry.value,
+				used: slotEntry.used
+			};
+			editingRecordId = null;
+			editingField = "";
+			editingValue = slotEntry.value;
+			chooserTitle.textContent = "修改金額";
+			chooserFinish.style.display = "none";
+			setChooserOptions([
+				{ value: 200, label: "200" },
+				{ value: 100, label: "100" },
+				{ value: 50, label: "50" },
+				{ value: 20, label: "20" },
+				{ value: 10, label: "10" },
+				{ value: 0, label: "謝謝參與" }
+			]);
+			chooserButtons.forEach(function (btn) {
+				btn.classList.toggle("selected", Number(btn.getAttribute("data-value")) === slotEntry.value);
+			});
+			chooserBackdrop.classList.add("show");
 			editChooser.classList.add("show");
 		}
 
@@ -1369,17 +2785,17 @@
 		function renderExpiredRecords() {
 			expiredRecords.forEach(function (record) {
 				recalculateRecordTotals(record);
-				if (record.status !== "已消費") {
+				if (record.status !== "已消費" && !isExpiredStatus(record.status)) {
 					ensurePeriodData(record);
 				}
 			});
 			if (expiredRecords.length === 0) {
-				expiredRecordBody.innerHTML = "<tr><td colspan=\"9\">目前沒有已使用或已過期的消費券。</td></tr>";
+				expiredRecordBody.innerHTML = "<tr><td colspan=\"8\">目前沒有已使用或已過期的消費券。</td></tr>";
 				return;
 			}
 			expiredRecordBody.innerHTML = expiredRecords.map(function (record) {
+				const displayStatus = isExpiredStatus(record.status) ? "已過期" : (record.status || "-");
 				return "<tr>"
-					+ "<td>" + (record.createdBy || currentViewUser) + "</td>"
 					+ "<td>" + getPhaseDisplay(record) + "</td>"
 					+ "<td>" + record.channel + "</td>"
 					+ "<td>" + record.voucher1 + "</td>"
@@ -1387,7 +2803,7 @@
 					+ "<td>" + record.voucher3 + "</td>"
 					+ "<td>" + record.voucherTotal + "</td>"
 					+ "<td>" + record.spendingTotal + "</td>"
-					+ "<td>" + (record.status || "-") + "</td>"
+					+ "<td>" + displayStatus + "</td>"
 					+ "</tr>";
 			}).join("");
 		}
@@ -1403,6 +2819,8 @@
 				recordBody.innerHTML = "<tr><td colspan=\"8\">尚未有記錄，請先選擇支付渠道與券金額後按完成。</td></tr>";
 				listExpiryDate.textContent = "-";
 				listStatus.textContent = "-";
+				updateChannelOverviewStatus();
+				checkAutoReminders();
 				renderExpiredRecords();
 				closeEditChooser();
 				verifySummaryConsistency();
@@ -1427,6 +2845,8 @@
 			const latestRecord = records[0];
 			listExpiryDate.textContent = latestRecord.expiryDate || "-";
 			listStatus.textContent = latestRecord.status || "-";
+			updateChannelOverviewStatus();
+			checkAutoReminders();
 			renderExpiredRecords();
 			verifySummaryConsistency();
 			updateStats();
@@ -1454,19 +2874,25 @@
 			records = loadRecords(user);
 			expiredRecords = loadExpiredRecords(user);
 			subscribeCloudData();
+			renderAllChannelSlots();
+			applyChannelVisibility();
 			renderRecords();
 			updateStats();
 		}
 
 		function closeMenu() {
 			menuPanel.classList.remove("show");
-			addBtn.setAttribute("aria-expanded", "false");
+			if (addBtn) {
+				addBtn.setAttribute("aria-expanded", "false");
+			}
 		}
 
 		function setLoginState(user) {
 			currentUser = user;
 			const isLoggedIn = Boolean(currentUser);
-			addBtn.disabled = !isLoggedIn || !canEditCurrentView();
+			if (addBtn) {
+				addBtn.disabled = !isLoggedIn || !canEditCurrentView();
+			}
 			if (isLoggedIn) {
 				currentUserTag.textContent = "目前登入：" + currentUser.name;
 				logoutBtn.classList.add("show");
@@ -1475,6 +2901,7 @@
 					switchViewUser(currentUser.name);
 				}
 				hint.textContent = canEditCurrentView() ? "已登入：" + currentUser.name + "，可開始新增或修改資料。" : "已登入：" + currentUser.name + "，目前正查看其他帳號記錄。";
+				checkAutoReminders();
 				updateStats();
 				return;
 			}
@@ -1485,6 +2912,7 @@
 			voucherPanel.classList.remove("show");
 			finishWrap.classList.remove("show");
 			selectedChannel = "";
+			showReminderMessages([]);
 			hint.textContent = "請先登入後再操作。";
 			updateStats();
 		}
@@ -1506,6 +2934,7 @@
 				return;
 			}
 			loginError.textContent = "";
+			requestNotificationPermission();
 			setLoginState({ username: matched.username, name: matched.name });
 		});
 
@@ -1513,22 +2942,27 @@
 			setLoginState(null);
 		});
 
-		addBtn.addEventListener("click", function () {
-			if (!currentUser) {
-				hint.textContent = "請先登入後再新增記錄。";
-				return;
-			}
-			if (!canEditCurrentView()) {
-				hint.textContent = "你只能修改自己帳號的記錄列表。";
-				return;
-			}
-			const isOpen = menuPanel.classList.toggle("show");
-			addBtn.setAttribute("aria-expanded", String(isOpen));
-		});
+		if (addBtn) {
+			addBtn.addEventListener("click", function () {
+				if (!currentUser) {
+					hint.textContent = "請先登入後再新增記錄。";
+					return;
+				}
+				if (!canEditCurrentView()) {
+					hint.textContent = "你只能修改自己帳號的記錄列表。";
+					return;
+				}
+				const isOpen = menuPanel.classList.toggle("show");
+				addBtn.setAttribute("aria-expanded", String(isOpen));
+			});
+		}
 
 		document.addEventListener("click", function (event) {
-			if (!menuPanel.contains(event.target) && !addBtn.contains(event.target)) {
+			if (!menuPanel.contains(event.target) && (!addBtn || !addBtn.contains(event.target))) {
 				closeMenu();
+			}
+			if (!channelRestoreWrap.contains(event.target)) {
+				closeChannelRestorePicker();
 			}
 		});
 
@@ -1537,6 +2971,10 @@
 				closeMenu();
 				closeEditChooser();
 			}
+		});
+
+		chooserBackdrop.addEventListener("click", function () {
+			closeEditChooser();
 		});
 
 		accountButtons.forEach(function (btn) {
@@ -1566,6 +3004,71 @@
 				closeMenu();
 				updateStats();
 			});
+		});
+
+		channelShowcaseList.addEventListener("click", function (event) {
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) {
+				return;
+			}
+			const summaryMoreButton = target.closest(".channel-summary-more");
+			if (summaryMoreButton instanceof HTMLElement) {
+				const summary = summaryMoreButton.closest("[data-channel-summary]");
+				const channelName = summary instanceof HTMLElement ? (summary.getAttribute("data-channel-summary") || "") : "";
+				if (channelName) {
+					openChannelSummaryChooser(channelName);
+				}
+				return;
+			}
+			const valueBox = target.closest(".channel-value-box[data-channel]");
+			if (valueBox instanceof HTMLElement) {
+				const channelName = valueBox.getAttribute("data-channel") || "";
+				const slotIndex = Number(valueBox.getAttribute("data-slot-index"));
+				const slotValue = Number(valueBox.getAttribute("data-slot-value"));
+				const slotUsed = valueBox.getAttribute("data-slot-used") === "1";
+				const slotEntry = getChannelSlotEntry(channelName, slotIndex);
+				if (slotEntry.used !== slotUsed) {
+					renderChannelSlots(channelName);
+				}
+				openChannelActionChooser(channelName, slotIndex, slotValue);
+				return;
+			}
+			const addButton = target.closest(".channel-placeholder[data-channel]");
+			if (!(addButton instanceof HTMLElement)) {
+				return;
+			}
+			const channelName = addButton.getAttribute("data-channel") || "";
+			openChannelAddChooser(channelName);
+		});
+
+		channelRestoreBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			if (!getHiddenChannelNames().length) {
+				closeChannelRestorePicker();
+				return;
+			}
+			channelRestorePickerOpen = !channelRestorePickerOpen;
+			channelRestoreWrap.classList.toggle('is-open', channelRestorePickerOpen);
+			channelRestoreBtn.setAttribute('aria-expanded', channelRestorePickerOpen ? 'true' : 'false');
+			if (channelRestorePickerOpen) {
+				renderChannelRestoreChoices();
+				return;
+			}
+			channelRestoreList.innerHTML = '';
+		});
+
+		channelRestoreList.addEventListener("click", function (event) {
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) {
+				return;
+			}
+			const restoreButton = target.closest(".channel-restore-choice[data-restore-channel]");
+			if (!(restoreButton instanceof HTMLElement)) {
+				return;
+			}
+			const channelName = restoreButton.getAttribute("data-restore-channel") || "";
+			restoreHiddenChannel(channelName);
+			hint.textContent = "已重新顯示「" + channelName + "」支付渠道。";
 		});
 
 		voucherCards.forEach(function (card) {
@@ -1702,10 +3205,116 @@
 					item.classList.remove("selected");
 				});
 				btn.classList.add("selected");
+				if (chooserMode === "channel-add" && pendingChannelAdd) {
+					const shouldClose = applyChannelAddSelection(pendingChannelAdd, editingValue);
+					if (shouldClose) {
+						closeEditChooser();
+					}
+					return;
+				}
+				if (chooserMode === "channel-action" && pendingChannelAction) {
+					const actionLabels = {
+						1: "標記為已使用",
+						2: "標記為未使用",
+						3: "修改券的金額",
+						4: "刪除",
+						5: "冇嘢改了"
+					};
+					if (editingValue === 5) {
+						closeEditChooser();
+						return;
+					}
+					if (editingValue === 3) {
+						openChannelValueEditChooser(
+							pendingChannelAction.channelName,
+							pendingChannelAction.slotIndex
+						);
+						return;
+					}
+					if (editingValue === 4) {
+						const deleted = deleteChannelSlot(
+							pendingChannelAction.channelName,
+							pendingChannelAction.slotIndex
+						);
+						if (deleted) {
+							hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格已刪除。";
+						}
+						closeEditChooser();
+						return;
+					}
+					if (editingValue === 1 || editingValue === 2) {
+						const changed = setChannelSlotUsed(
+							pendingChannelAction.channelName,
+							pendingChannelAction.slotIndex,
+							editingValue === 1
+						);
+						if (changed) {
+							hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格已設為「" + actionLabels[editingValue] + "」。";
+							closeEditChooser();
+							return;
+						}
+					}
+					hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格已選擇「" + actionLabels[editingValue] + "」。";
+					closeEditChooser();
+					return;
+				}
+				if (chooserMode === "channel-summary-action" && pendingChannelSummary) {
+					if (editingValue === 4) {
+						closeEditChooser();
+						return;
+					}
+					if (editingValue === 1) {
+						const archivedRecord = buildChannelArchiveRecord(pendingChannelSummary, "已消費");
+						const changed = setAllChannelSlotsUsed(pendingChannelSummary, true);
+						if (changed) {
+							if (archivedRecord) {
+								archiveRecord(archivedRecord, "已消費");
+								saveExpiredRecords();
+								renderExpiredRecords();
+							}
+							hint.textContent = pendingChannelSummary + " 已全部標記為已使用。";
+						} else {
+							hint.textContent = pendingChannelSummary + " 目前沒有可標記的消費券。";
+						}
+						closeEditChooser();
+						return;
+					}
+					if (editingValue === 2) {
+						const reset = resetChannelSlots(pendingChannelSummary);
+						if (reset) {
+							hint.textContent = pendingChannelSummary + " 已重置整筆消費券。";
+						} else {
+							hint.textContent = pendingChannelSummary + " 目前沒有可重置的消費券。";
+						}
+						closeEditChooser();
+						return;
+					}
+					if (editingValue === 3) {
+						hideChannelItem(pendingChannelSummary);
+						hint.textContent = pendingChannelSummary + " 已隱藏，可按下方＋恢復顯示。";
+						closeEditChooser();
+						return;
+					}
+				}
+				if (chooserMode === "channel-edit-value" && pendingChannelAction) {
+					const changed = setChannelSlotValue(
+						pendingChannelAction.channelName,
+						pendingChannelAction.slotIndex,
+						editingValue
+					);
+					if (changed) {
+						hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格金額已改為「" + btn.textContent + "」。";
+					}
+					closeEditChooser();
+				}
 			});
 		});
 
 		chooserFinish.addEventListener("click", function () {
+			if (chooserMode === "channel-add") {
+				closeEditChooser();
+				return;
+			}
 			if (!editingRecordId || !editingField || !canEditCurrentView()) {
 				return;
 			}
@@ -1731,6 +3340,10 @@
 				renderExpiredRecords();
 			}
 		});
+
+		window.setInterval(function () {
+			checkAutoReminders();
+		}, 60 * 1000);
 
 		switchViewUser("樂");
 		setLoginState(null);
