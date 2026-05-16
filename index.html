@@ -353,6 +353,31 @@
 			font-size: 1rem;
 		}
 
+		.chooser-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 12px;
+		}
+
+		.chooser-header .panel-title {
+			margin-bottom: 0;
+		}
+
+		.chooser-progress {
+			display: none;
+			min-width: 36px;
+			text-align: right;
+			font-size: 14px;
+			font-weight: 700;
+			color: #4e6a81;
+		}
+
+		.chooser-progress.show {
+			display: inline-block;
+		}
+
 		.voucher-grid {
 			display: grid;
 			grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1230,7 +1255,10 @@
 		<div id="chooserBackdrop" class="chooser-backdrop"></div>
 
 		<section id="editChooser" class="edit-chooser" aria-modal="true" role="dialog">
-			<h2 id="chooserTitle" class="panel-title">修改金額</h2>
+			<div class="chooser-header">
+				<h2 id="chooserTitle" class="panel-title">修改金額</h2>
+				<span id="chooserProgress" class="chooser-progress">0/3</span>
+			</div>
 			<div class="chooser-grid">
 				<button class="chooser-btn" type="button" data-value="0">無</button>
 				<button class="chooser-btn" type="button" data-value="10">10</button>
@@ -1521,6 +1549,9 @@
 		const cloudRootPath = "voucher_app/group_shared";
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
+		const channelSelectionStorageKeyPrefix = "voucherChannelSelectionsV1_";
+		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
+		const hiddenChannelStorageKeyPrefix = "voucherHiddenChannelsV1_";
 		const reminderStorageKeyPrefix = "voucherReminderV1_";
 		const maxRecords = 8;
 		const autoLoginPassword = "123456";
@@ -1582,6 +1613,7 @@
 		const editChooser = document.getElementById("editChooser");
 		const chooserBackdrop = document.getElementById("chooserBackdrop");
 		const chooserTitle = document.getElementById("chooserTitle");
+		const chooserProgress = document.getElementById("chooserProgress");
 		const chooserGrid = editChooser.querySelector(".chooser-grid");
 		const chooserButtons = Array.from(document.querySelectorAll(".chooser-btn"));
 		const chooserFinish = document.getElementById("chooserFinish");
@@ -1654,6 +1686,18 @@
 			return reminderStorageKeyPrefix + user;
 		}
 
+		function getChannelSelectionStorageKey(user) {
+			return channelSelectionStorageKeyPrefix + user;
+		}
+
+		function getChannelPeriodStorageKey(user) {
+			return channelPeriodStorageKeyPrefix + user;
+		}
+
+		function getHiddenChannelStorageKey(user) {
+			return hiddenChannelStorageKeyPrefix + user;
+		}
+
 		function getChannelSelectionState(user) {
 			if (!channelSelections[user]) {
 				channelSelections[user] = {};
@@ -1661,7 +1705,22 @@
 			return channelSelections[user];
 		}
 
+		function sanitizeChannelStateMap(state) {
+			const source = state && typeof state === "object" ? state : {};
+			const cleaned = {};
+			Object.keys(source).forEach(function (channelName) {
+				if (!channelName) {
+					return;
+				}
+				cleaned[channelName] = source[channelName];
+			});
+			return cleaned;
+		}
+
 		function getChannelSelectionList(channelName) {
+			if (!channelName) {
+				return [];
+			}
 			const userState = getChannelSelectionState(currentViewUser);
 			if (!userState[channelName]) {
 				userState[channelName] = [];
@@ -1778,6 +1837,7 @@
 				channelItem.classList.toggle('is-hidden', Boolean(hidden));
 			}
 			updateChannelRestoreButton();
+			saveChannelState();
 		}
 
 		function applyChannelVisibility() {
@@ -1954,6 +2014,7 @@
 			values.push({ value: Number(value || 0), used: false });
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
+			saveChannelState();
 			hint.textContent = "已為 " + channelName + " 添加 " + (value === 0 ? "無" : value) + " 券。";
 			return values.length >= 3;
 		}
@@ -1966,6 +2027,7 @@
 			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
 			slotEntry.used = used;
 			renderChannelSlots(channelName);
+			saveChannelState();
 			return true;
 		}
 
@@ -1978,6 +2040,7 @@
 			slotEntry.value = Number(value || 0);
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
+			saveChannelState();
 			return true;
 		}
 
@@ -1996,6 +2059,7 @@
 				values[index] = slotEntry;
 			});
 			renderChannelSlots(channelName);
+			saveChannelState();
 			return changed;
 		}
 
@@ -2058,6 +2122,7 @@
 				clearChannelPeriodMeta(channelName);
 			});
 			if (moved) {
+				saveChannelState();
 				saveExpiredRecords();
 			}
 		}
@@ -2070,6 +2135,7 @@
 			values.length = 0;
 			clearChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
+			saveChannelState();
 			return true;
 		}
 
@@ -2087,6 +2153,7 @@
 			}
 			values.splice(slotIndex, 1);
 			renderChannelSlots(channelName);
+			saveChannelState();
 			return true;
 		}
 
@@ -2164,9 +2231,31 @@
 			}
 		}
 
+		function loadObjectState(storageKey) {
+			const raw = localStorage.getItem(storageKey);
+			if (!raw) {
+				return {};
+			}
+			try {
+				const parsed = JSON.parse(raw);
+				return parsed && typeof parsed === "object" ? parsed : {};
+			} catch (error) {
+				return {};
+			}
+		}
+
 		function persistLocal() {
 			localStorage.setItem(getStorageKey(currentViewUser), JSON.stringify(records));
 			localStorage.setItem(getExpiredStorageKey(currentViewUser), JSON.stringify(expiredRecords));
+			localStorage.setItem(getChannelSelectionStorageKey(currentViewUser), JSON.stringify(sanitizeChannelStateMap(getChannelSelectionState(currentViewUser))));
+			localStorage.setItem(getChannelPeriodStorageKey(currentViewUser), JSON.stringify(sanitizeChannelStateMap(getChannelSelectionPeriodState(currentViewUser))));
+			localStorage.setItem(getHiddenChannelStorageKey(currentViewUser), JSON.stringify(getHiddenChannelItemState(currentViewUser)));
+		}
+
+		function loadChannelState(user) {
+			channelSelections[user] = sanitizeChannelStateMap(loadObjectState(getChannelSelectionStorageKey(user)));
+			channelSelectionPeriods[user] = sanitizeChannelStateMap(loadObjectState(getChannelPeriodStorageKey(user)));
+			hiddenChannelItems[user] = loadObjectState(getHiddenChannelStorageKey(user));
 		}
 
 		function subscribeCloudData() {
@@ -2183,6 +2272,9 @@
 					cloudRef.set({
 						records: records,
 						expiredRecords: expiredRecords,
+						channelSelections: getChannelSelectionState(currentViewUser),
+						channelSelectionPeriods: getChannelSelectionPeriodState(currentViewUser),
+						hiddenChannelItems: getHiddenChannelItemState(currentViewUser),
 						updatedAt: Date.now()
 					});
 					return;
@@ -2191,10 +2283,15 @@
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
 				records = cleanedRecords.items;
 				expiredRecords = cleanedExpiredRecords.items;
+				channelSelections[currentViewUser] = sanitizeChannelStateMap(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {});
+				channelSelectionPeriods[currentViewUser] = sanitizeChannelStateMap(data.channelSelectionPeriods && typeof data.channelSelectionPeriods === "object" ? data.channelSelectionPeriods : {});
+				hiddenChannelItems[currentViewUser] = data.hiddenChannelItems && typeof data.hiddenChannelItems === "object" ? data.hiddenChannelItems : {};
 				persistLocal();
 				if (cleanedRecords.changed || cleanedExpiredRecords.changed) {
 					syncCloudData();
 				}
+				renderAllChannelSlots();
+				applyChannelVisibility();
 				renderRecords();
 				updateStats();
 			};
@@ -2231,6 +2328,9 @@
 			realtimeDb.ref(cloudRootPath + "/" + currentViewUser).set({
 				records: records,
 				expiredRecords: expiredRecords,
+				channelSelections: sanitizeChannelStateMap(getChannelSelectionState(currentViewUser)),
+				channelSelectionPeriods: sanitizeChannelStateMap(getChannelSelectionPeriodState(currentViewUser)),
+				hiddenChannelItems: getHiddenChannelItemState(currentViewUser),
 				updatedAt: Date.now()
 			}).catch(function (error) {
 				console.error("Firebase 寫入失敗", error);
@@ -2243,6 +2343,11 @@
 		}
 
 		function saveExpiredRecords() {
+			persistLocal();
+			syncCloudData();
+		}
+
+		function saveChannelState() {
 			persistLocal();
 			syncCloudData();
 		}
@@ -2560,6 +2665,10 @@
 			pendingChannelSummary = "";
 			chooserFinish.textContent = "套用";
 			chooserFinish.style.display = "inline-block";
+			if (chooserProgress) {
+				chooserProgress.textContent = "0/3";
+				chooserProgress.classList.remove("show");
+			}
 			editingRecordId = null;
 			editingField = "";
 			editingValue = 0;
@@ -2588,6 +2697,20 @@
 			});
 		}
 
+		function updateChooserProgress(channelName) {
+			if (!chooserProgress) {
+				return;
+			}
+			if (chooserMode !== "channel-add" || !channelName) {
+				chooserProgress.textContent = "0/3";
+				chooserProgress.classList.remove("show");
+				return;
+			}
+			const count = Math.min(getChannelSelectionList(channelName).length, 3);
+			chooserProgress.textContent = count + "/3";
+			chooserProgress.classList.add("show");
+		}
+
 		function openEditChooser(recordId, field, currentValue) {
 			if (!canEditCurrentView()) {
 				return;
@@ -2597,6 +2720,7 @@
 			pendingChannelAdd = "";
 			chooserFinish.textContent = "套用";
 			chooserFinish.style.display = "inline-block";
+			updateChooserProgress("");
 			setChooserOptions([
 				{ value: 0, label: "無" },
 				{ value: 10, label: "10" },
@@ -2638,6 +2762,7 @@
 			chooserTitle.textContent = "為 " + channelName + " 添加券";
 			chooserFinish.textContent = "完成";
 			chooserFinish.style.display = "inline-block";
+			updateChooserProgress(channelName);
 			setChooserOptions([
 				{ value: 200, label: "200" },
 				{ value: 100, label: "100" },
@@ -2673,6 +2798,7 @@
 			editingValue = 0;
 			chooserTitle.textContent = channelName + " 的券 " + (value === 0 ? "無" : value);
 			chooserFinish.style.display = "none";
+			updateChooserProgress("");
 			setChooserOptions([
 				{ value: 1, label: "標記為已使用", iconClass: "use", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5 10.8 15.3 16.2 8.7"></path></svg>' },
 				{ value: 2, label: "標記為未使用", iconClass: "unuse", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.8"></circle><path d="M12 3.5v3.2M12 17.3v3.2M3.5 12h3.2M17.3 12h3.2"></path><circle cx="12" cy="12" r="8.5"></circle></svg>' },
@@ -2703,6 +2829,7 @@
 			editingValue = 0;
 			chooserTitle.textContent = channelName + " 更多選項";
 			chooserFinish.style.display = "none";
+			updateChooserProgress("");
 			setChooserOptions([
 				{ value: 1, label: "全部標記為已使用", iconClass: "use", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5 10.8 15.3 16.2 8.7"></path></svg>' },
 				{ value: 2, label: "重置整筆消費券", iconClass: "unuse reset-symbol", icon: '&#x21BB;' },
@@ -2729,6 +2856,7 @@
 			editingValue = slotEntry.value;
 			chooserTitle.textContent = "修改金額";
 			chooserFinish.style.display = "none";
+			updateChooserProgress("");
 			setChooserOptions([
 				{ value: 200, label: "200" },
 				{ value: 100, label: "100" },
@@ -2822,7 +2950,6 @@
 				updateChannelOverviewStatus();
 				checkAutoReminders();
 				renderExpiredRecords();
-				closeEditChooser();
 				verifySummaryConsistency();
 				updateStats();
 				return;
@@ -2873,6 +3000,7 @@
 			currentViewUser = user;
 			records = loadRecords(user);
 			expiredRecords = loadExpiredRecords(user);
+			loadChannelState(user);
 			subscribeCloudData();
 			renderAllChannelSlots();
 			applyChannelVisibility();
@@ -3206,8 +3334,9 @@
 				});
 				btn.classList.add("selected");
 				if (chooserMode === "channel-add" && pendingChannelAdd) {
-					const shouldClose = applyChannelAddSelection(pendingChannelAdd, editingValue);
-					if (shouldClose) {
+					applyChannelAddSelection(pendingChannelAdd, editingValue);
+					updateChooserProgress(pendingChannelAdd);
+					if (getChannelSelectionList(pendingChannelAdd).length >= 3) {
 						closeEditChooser();
 					}
 					return;
@@ -3253,6 +3382,10 @@
 							closeEditChooser();
 							return;
 						}
+					}
+					if (!pendingChannelAction) {
+						closeEditChooser();
+						return;
 					}
 					hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格已選擇「" + actionLabels[editingValue] + "」。";
 					closeEditChooser();
