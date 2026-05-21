@@ -2544,6 +2544,56 @@
 			return cleaned;
 		}
 
+		function hasAnyChannelSelections(state) {
+			return Object.keys(sanitizeChannelStateMap(state)).some(function (channelName) {
+				const items = Array.isArray(state[channelName]) ? state[channelName] : [];
+				return items.length > 0;
+			});
+		}
+
+		function buildChannelStateFromLegacyRecords(recordList) {
+			const selections = {};
+			const periods = {};
+			if (!Array.isArray(recordList)) {
+				return {
+					selections: selections,
+					periods: periods,
+					changed: false
+				};
+			}
+			let changed = false;
+			recordList.forEach(function (record) {
+				if (!record || !record.channel) {
+					return;
+				}
+				ensurePeriodData(record);
+				if (isExpiredStatus(record.status)) {
+					return;
+				}
+				const channelName = getSelectionChannelName(record.channel);
+				if (!channelName || selections[channelName]) {
+					return;
+				}
+				selections[channelName] = [record.voucher1, record.voucher2, record.voucher3].map(function (value) {
+					return {
+						value: normalizeNumber(value),
+						used: false
+					};
+				});
+				periods[channelName] = {
+					phaseLabel: record.phaseLabel || "-",
+					phaseStartDate: record.phaseStartDate || "-",
+					expiryDate: record.expiryDate || "-"
+				};
+				changed = true;
+			});
+			return {
+				selections: selections,
+				periods: periods,
+				changed: changed
+			};
+		}
+
 		function getChannelSelectionList(channelName) {
 			if (!channelName) {
 				return [];
@@ -3009,6 +3059,18 @@
 			return channelAliases[channel] || channel;
 		}
 
+		function getSelectionChannelName(channel) {
+			const selectionChannelNames = {
+				"中國銀行": "中銀",
+				"工商銀行": "工商",
+				"國際銀行": "國際",
+				"廣發銀行": "廣發",
+				"UePay": "UEpay"
+			};
+			const normalized = normalizeChannelName(channel);
+			return selectionChannelNames[normalized] || normalized;
+		}
+
 		function getCleanArray(list) {
 			if (!Array.isArray(list)) {
 				return { items: [], changed: false };
@@ -3085,6 +3147,13 @@
 			channelSelections[user] = sanitizeChannelStateMap(loadObjectState(getChannelSelectionStorageKey(user)));
 			channelSelectionPeriods[user] = sanitizeChannelStateMap(loadObjectState(getChannelPeriodStorageKey(user)));
 			hiddenChannelItems[user] = loadObjectState(getHiddenChannelStorageKey(user));
+			if (!hasAnyChannelSelections(channelSelections[user])) {
+				const migratedState = buildChannelStateFromLegacyRecords(loadRecords(user));
+				if (migratedState.changed) {
+					channelSelections[user] = migratedState.selections;
+					channelSelectionPeriods[user] = migratedState.periods;
+				}
+			}
 		}
 
 		function subscribeCloudData() {
@@ -3116,8 +3185,15 @@
 				channelSelections[currentViewUser] = sanitizeChannelStateMap(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {});
 				channelSelectionPeriods[currentViewUser] = sanitizeChannelStateMap(data.channelSelectionPeriods && typeof data.channelSelectionPeriods === "object" ? data.channelSelectionPeriods : {});
 				hiddenChannelItems[currentViewUser] = data.hiddenChannelItems && typeof data.hiddenChannelItems === "object" ? data.hiddenChannelItems : {};
+				if (!hasAnyChannelSelections(channelSelections[currentViewUser])) {
+					const migratedState = buildChannelStateFromLegacyRecords(records);
+					if (migratedState.changed) {
+						channelSelections[currentViewUser] = migratedState.selections;
+						channelSelectionPeriods[currentViewUser] = migratedState.periods;
+					}
+				}
 				persistLocal();
-				if (cleanedRecords.changed || cleanedExpiredRecords.changed || dedupedExpiredRecords.changed) {
+				if (cleanedRecords.changed || cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || !hasAnyChannelSelections(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {})) {
 					syncCloudData();
 				}
 				renderAllChannelSlots();
