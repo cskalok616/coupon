@@ -1521,6 +1521,7 @@
 			<div class="title-block">
 				<div class="member-switcher-wrap">
 					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
+						<button class="member-pill" type="button" data-user="Admin">Admin</button>
 						<button class="member-pill" type="button" data-user="樂">樂</button>
 						<button class="member-pill" type="button" data-user="珊">珊</button>
 						<button class="member-pill" type="button" data-user="旭">旭</button>
@@ -2471,11 +2472,17 @@
 			if (!currentUser) {
 				return false;
 			}
+			if (isAdminUser(currentUser)) {
+				return true;
+			}
 			const allowedViews = delegatedEditors[currentUser.name] || [];
 			return currentUser.name === currentViewUser
 				|| currentUser.name === "妍"
-				|| currentUser.name === "Admin"
 				|| allowedViews.includes(currentViewUser);
+		}
+
+		function isAdminUser(user) {
+			return Boolean(user) && user.name === "Admin";
 		}
 
 		function getStorageKey(user) {
