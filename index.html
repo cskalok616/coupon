@@ -1891,13 +1891,14 @@
 				return;
 			}
 			if (isStandaloneApp()) {
-				installAppBtn.textContent = "已安裝";
+				installAppBtn.hidden = true;
 				installDialogConfirm.hidden = true;
 				installSteps.hidden = true;
 				installStatus.textContent = "這個 App 已經在主畫面上，可以直接開啟使用。";
 				installDialogCopy.textContent = "你已經安裝完成，不需要再重複加入主畫面。";
 				return;
 			}
+			installAppBtn.hidden = false;
 			installAppBtn.textContent = "安裝APP";
 			if (deferredInstallPrompt) {
 				installDialogConfirm.hidden = false;
