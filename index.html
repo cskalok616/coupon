@@ -1857,6 +1857,16 @@
 			return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 		}
 
+		function renderInstallSteps(items) {
+			if (!installSteps) {
+				return;
+			}
+			installSteps.innerHTML = items.map(function (item) {
+				return "<li>" + item + "</li>";
+			}).join("");
+			installSteps.hidden = false;
+		}
+
 		function refreshInstallUi() {
 			if (!installAppBtn || !installDialogConfirm || !installSteps || !installStatus || !installDialogCopy) {
 				return;
@@ -1872,19 +1882,33 @@
 			installAppBtn.textContent = "安裝APP";
 			if (deferredInstallPrompt) {
 				installDialogConfirm.hidden = false;
-				installSteps.hidden = true;
+				renderInstallSteps([
+					"先看完這個說明，再按下面的「立即安裝」。",
+					"瀏覽器跳出提示後，按確認安裝。",
+					"完成後，主畫面會出現「我的消費券」。"
+				]);
 				installStatus.textContent = "這個瀏覽器支援直接安裝，按下「立即安裝」即可。";
 				installDialogCopy.textContent = "安裝後會以「我的消費券」名稱顯示在主畫面。";
 				return;
 			}
 			installDialogConfirm.hidden = true;
-			installSteps.hidden = !isIosDevice();
-			installStatus.textContent = isIosDevice()
-				? "Safari 需要手動加入主畫面。圖示會使用你指定的圖片，名稱預設為「我的消費券」。"
-				: "如果目前瀏覽器沒有出現安裝提示，請改用 Chrome、Edge 或 Safari 再試。";
-			installDialogCopy.textContent = isIosDevice()
-				? "請依照下面步驟把 App 加到 iPhone 或 iPad 的主畫面。"
-				: "這個瀏覽器暫時未提供直接安裝按鈕，但安裝圖示與名稱已經設定完成。";
+			if (isIosDevice()) {
+				renderInstallSteps([
+					"在 Safari 點分享按鈕。",
+					"選擇「加入主畫面」。",
+					"名稱保持「我的消費券」，再按「加入」。"
+				]);
+				installStatus.textContent = "Safari 需要手動加入主畫面。圖示會使用你指定的圖片，名稱預設為「我的消費券」。";
+				installDialogCopy.textContent = "請依照下面步驟把 App 加到 iPhone 或 iPad 的主畫面。";
+				return;
+			}
+			renderInstallSteps([
+				"如果你看到瀏覽器的安裝提示，直接按安裝。",
+				"如果沒有提示，打開瀏覽器選單，找「安裝應用程式」或「加入主畫面」。",
+				"完成後，主畫面會以「我的消費券」顯示。"
+			]);
+			installStatus.textContent = "這個瀏覽器暫時未提供直接安裝按鈕，但你可以按上面步驟手動加入主畫面。";
+			installDialogCopy.textContent = "安裝圖示與名稱已經設定完成，照步驟做就可以加到主畫面。";
 		}
 
 		function openInstallDialog() {
@@ -3381,10 +3405,6 @@
 			installAppBtn.addEventListener("click", function () {
 				if (isStandaloneApp()) {
 					hint.textContent = "「我的消費券」已經安裝在主畫面。";
-				}
-				if (deferredInstallPrompt) {
-					triggerInstallPrompt();
-					return;
 				}
 				openInstallDialog();
 			});
