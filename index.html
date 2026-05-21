@@ -4,6 +4,13 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>消費券記錄 App</title>
+	<meta name="theme-color" content="#1d6fd8" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="apple-mobile-web-app-title" content="消費券記錄" />
+	<link rel="manifest" href="manifest.webmanifest" />
+	<link rel="icon" href="icon-512.svg" type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="icon-512.svg" />
 	<style>
 		:root {
 			color-scheme: light;
@@ -1323,7 +1330,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo boc"><img class="channel-logo-image" src="./中銀.webp" alt="中銀 logo" /></div>
+						<div class="channel-logo boc"><img class="channel-logo-image" src="./boc.webp" alt="中銀 logo" /></div>
 						<div class="channel-name">中銀</div>
 					</div>
 					<div class="channel-slot-list" data-channel="中銀">
@@ -1347,7 +1354,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo icbc"><img class="channel-logo-image" src="./工商.webp" alt="工商 logo" /></div>
+						<div class="channel-logo icbc"><img class="channel-logo-image" src="./icbc.webp" alt="工商 logo" /></div>
 						<div class="channel-name">工商</div>
 					</div>
 					<div class="channel-slot-list" data-channel="工商">
@@ -1371,7 +1378,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo luso"><img class="channel-logo-image" src="./國際.webp" alt="國際 logo" /></div>
+						<div class="channel-logo luso"><img class="channel-logo-image" src="./luso.webp" alt="國際 logo" /></div>
 						<div class="channel-name">國際</div>
 					</div>
 					<div class="channel-slot-list" data-channel="國際">
@@ -1395,7 +1402,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo tfb"><img class="channel-logo-image" src="./豐付寶.webp" alt="豐付寶 logo" /></div>
+						<div class="channel-logo tfb"><img class="channel-logo-image" src="./tfb.webp" alt="豐付寶 logo" /></div>
 						<div class="channel-name">豐付寶</div>
 					</div>
 					<div class="channel-slot-list" data-channel="豐付寶">
@@ -1419,7 +1426,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo gf"><img class="channel-logo-image" src="./廣發.webp" alt="廣發 logo" /></div>
+						<div class="channel-logo gf"><img class="channel-logo-image" src="./gdb.webp" alt="廣發 logo" /></div>
 						<div class="channel-name">廣發</div>
 					</div>
 					<div class="channel-slot-list" data-channel="廣發">
@@ -1443,7 +1450,7 @@
 				</div>
 				<div class="channel-showcase-item">
 					<div class="channel-brand">
-						<div class="channel-logo alipay"><img class="channel-logo-image" src="./支付寶.webp" alt="支付寶 logo" /></div>
+						<div class="channel-logo alipay"><img class="channel-logo-image" src="./alipay.webp" alt="支付寶 logo" /></div>
 						<div class="channel-name">支付寶</div>
 					</div>
 					<div class="channel-slot-list" data-channel="支付寶">
@@ -2107,7 +2114,7 @@
 				createdBy: currentUser ? currentUser.name : currentViewUser,
 				phaseLabel: phaseLabel,
 				phaseStartDate: phaseStartDate,
-				channel: channelName,
+				channel: getArchivedChannelName(channelName),
 				createdDate: createdDate,
 				voucher1: voucher1,
 				voucher2: voucher2,
@@ -2894,11 +2901,21 @@
 			return typeof statusText === "string" && statusText.indexOf("已過期") === 0;
 		}
 
+		function getArchivedChannelName(channelName) {
+			const archivedChannelNames = {
+				"中銀": "中國銀行",
+				"工商": "工商銀行",
+				"廣發": "廣發銀行",
+				"國際": "國際銀行"
+			};
+			return archivedChannelNames[channelName] || channelName;
+		}
+
 		function isSameArchivedRecord(left, right) {
 			if (!left || !right) {
 				return false;
 			}
-			return left.channel === right.channel
+			return getArchivedChannelName(left.channel) === getArchivedChannelName(right.channel)
 				&& left.phaseLabel === right.phaseLabel
 				&& left.phaseStartDate === right.phaseStartDate
 				&& left.expiryDate === right.expiryDate
@@ -2918,7 +2935,10 @@
 		}
 
 		function archiveRecord(record, statusText) {
-			const archivedRecord = Object.assign({}, record, { status: statusText });
+			const archivedRecord = Object.assign({}, record, {
+				channel: getArchivedChannelName(record.channel),
+				status: statusText
+			});
 			expiredRecords = [archivedRecord].concat(expiredRecords).filter(function (item, index, array) {
 				return array.findIndex(function (candidate) {
 					return candidate.id === item.id || isSameArchivedRecord(candidate, item);
@@ -2966,7 +2986,7 @@
 				const displayStatus = isExpiredStatus(record.status) ? "已過期" : (record.status || "-");
 				return "<tr>"
 					+ "<td>" + getPhaseDisplay(record) + "</td>"
-					+ "<td>" + record.channel + "</td>"
+					+ "<td>" + getArchivedChannelName(record.channel) + "</td>"
 					+ "<td>" + record.voucher1 + "</td>"
 					+ "<td>" + record.voucher2 + "</td>"
 					+ "<td>" + record.voucher3 + "</td>"
@@ -3516,6 +3536,14 @@
 		window.setInterval(function () {
 			checkAutoReminders();
 		}, 60 * 1000);
+
+		if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+			window.addEventListener("load", function () {
+				navigator.serviceWorker.register("sw.js").catch(function (error) {
+					console.error("Service Worker 註冊失敗", error);
+				});
+			});
+		}
 
 		switchViewUser("樂");
 		setLoginState(null);
