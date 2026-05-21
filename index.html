@@ -146,6 +146,7 @@
 
 		#logoutBtn,
 		#installAppBtn,
+		#reminderSettingsBtn,
 		#addBtn,
 		#finishBtn,
 		#cancelBtn,
@@ -181,6 +182,21 @@
 		}
 
 		#installAppBtn[hidden] {
+			display: none;
+		}
+
+		#reminderSettingsBtn {
+			border: 1px solid #c9d9ea;
+			background: #f7fbff;
+			color: #1f537d;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: 0.84rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		#reminderSettingsBtn[hidden] {
 			display: none;
 		}
 
@@ -315,6 +331,79 @@
 
 		.install-primary[hidden] {
 			display: none;
+		}
+
+		.reminder-dialog {
+			width: min(480px, calc(100vw - 32px));
+			border: none;
+			border-radius: 24px;
+			padding: 0;
+			overflow: hidden;
+			box-shadow: 0 28px 80px rgba(12, 38, 61, 0.3);
+		}
+
+		.reminder-dialog::backdrop {
+			background: rgba(10, 22, 35, 0.45);
+			backdrop-filter: blur(3px);
+		}
+
+		.reminder-dialog-body {
+			padding: 22px;
+			background: linear-gradient(180deg, #f6fbff 0%, #ffffff 68%);
+		}
+
+		.reminder-title {
+			margin: 0;
+			font-size: 1.35rem;
+			color: #14344d;
+		}
+
+		.reminder-copy {
+			margin: 10px 0 0;
+			color: #4b657d;
+			line-height: 1.55;
+		}
+
+		.reminder-section-title {
+			margin: 18px 0 8px;
+			font-size: 0.9rem;
+			font-weight: 800;
+			letter-spacing: 0.04em;
+			color: #1d6fd8;
+		}
+
+		.reminder-rule-list,
+		.reminder-preview-list {
+			margin: 0;
+			padding-left: 20px;
+			color: #234661;
+			line-height: 1.65;
+		}
+
+		.reminder-preview-empty {
+			margin: 0;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #eef6ff;
+			color: #1f537d;
+			font-size: 0.92rem;
+		}
+
+		.reminder-dialog-actions {
+			display: flex;
+			justify-content: flex-end;
+			margin-top: 18px;
+		}
+
+		.reminder-dialog-close {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 16px;
+			font-size: 0.92rem;
+			font-weight: 700;
+			cursor: pointer;
+			background: #eaf1f8;
+			color: #234661;
 		}
 
 		@media (max-width: 640px) {
@@ -1317,6 +1406,7 @@
 				<span id="currentViewTag" class="view-tag">目前檢視：樂</span>
 				<span id="currentUserTag" class="user-tag">未登入</span>
 				<button id="installAppBtn" type="button">安裝APP</button>
+				<button id="reminderSettingsBtn" type="button" hidden>設定提醒</button>
 				<button id="logoutBtn" type="button">登出</button>
 			</div>
 		</div>
@@ -1340,6 +1430,21 @@
 				<div class="install-actions">
 					<button id="installDialogClose" class="install-secondary" type="button">關閉</button>
 					<button id="installDialogConfirm" class="install-primary" type="button">立即安裝</button>
+				</div>
+			</div>
+		</dialog>
+
+		<dialog id="reminderDialog" class="reminder-dialog">
+			<div class="reminder-dialog-body">
+				<h2 class="reminder-title">設定提醒</h2>
+				<p class="reminder-copy">這裡會顯示目前 App 自動提醒的時間規則，以及現在會發出的提醒內容預覽。</p>
+				<h3 class="reminder-section-title">自動提醒時間</h3>
+				<ul id="reminderRuleList" class="reminder-rule-list"></ul>
+				<h3 class="reminder-section-title">目前提醒內容預覽</h3>
+				<ul id="reminderPreviewList" class="reminder-preview-list"></ul>
+				<p id="reminderPreviewEmpty" class="reminder-preview-empty" hidden>目前沒有可預覽的到期提醒內容。</p>
+				<div class="reminder-dialog-actions">
+					<button id="reminderDialogClose" class="reminder-dialog-close" type="button">關閉</button>
 				</div>
 			</div>
 		</dialog>
@@ -1793,6 +1898,7 @@
 		const currentViewTag = document.getElementById("currentViewTag");
 		const currentUserTag = document.getElementById("currentUserTag");
 		const installAppBtn = document.getElementById("installAppBtn");
+		const reminderSettingsBtn = document.getElementById("reminderSettingsBtn");
 		const logoutBtn = document.getElementById("logoutBtn");
 		const installDialog = document.getElementById("installDialog");
 		const installDialogCopy = document.getElementById("installDialogCopy");
@@ -1800,6 +1906,11 @@
 		const installStatus = document.getElementById("installStatus");
 		const installDialogClose = document.getElementById("installDialogClose");
 		const installDialogConfirm = document.getElementById("installDialogConfirm");
+		const reminderDialog = document.getElementById("reminderDialog");
+		const reminderRuleList = document.getElementById("reminderRuleList");
+		const reminderPreviewList = document.getElementById("reminderPreviewList");
+		const reminderPreviewEmpty = document.getElementById("reminderPreviewEmpty");
+		const reminderDialogClose = document.getElementById("reminderDialogClose");
 		const addBtn = document.getElementById("addBtn");
 		const menuPanel = document.getElementById("menuPanel");
 		const optionButtons = Array.from(document.querySelectorAll(".option-btn"));
@@ -1887,12 +1998,66 @@
 			installSteps.hidden = false;
 		}
 
+		function refreshReminderSettingsButton() {
+			if (!reminderSettingsBtn) {
+				return;
+			}
+			reminderSettingsBtn.hidden = !(Boolean(currentUser) && isStandaloneApp());
+		}
+
+		function buildReminderPreviewMessages() {
+			const previewMessages = [];
+			const activeRecords = records.filter(function (record) {
+				ensurePeriodData(record);
+				return Boolean(record.expiryDate) && !isExpiredStatus(record.status);
+			});
+			activeRecords.slice(0, 3).forEach(function (record) {
+				previewMessages.push(currentViewUser + " 的 " + record.channel + " 明天到期（到期日 " + record.expiryDate + "）");
+				previewMessages.push(currentViewUser + " 的 " + record.channel + " 今天到期（到期日 " + record.expiryDate + "）");
+			});
+			if (previewMessages.length) {
+				return previewMessages;
+			}
+			const previewOwner = currentUser ? currentUser.name : currentViewUser;
+			return [
+				previewOwner + " 的 支付渠道 明天到期（到期日 YYYY-MM-DD）",
+				previewOwner + " 的 支付渠道 今天到期（到期日 YYYY-MM-DD）"
+			];
+		}
+
+		function renderReminderDialog() {
+			if (!reminderRuleList || !reminderPreviewList || !reminderPreviewEmpty) {
+				return;
+			}
+			const reminderRules = [
+				"到期前一天中午 12:00 自動提醒一次。",
+				"到期當天中午 12:00 自動提醒一次。"
+			];
+			const previewMessages = buildReminderPreviewMessages();
+			reminderRuleList.innerHTML = reminderRules.map(function (item) {
+				return "<li>" + item + "</li>";
+			}).join("");
+			reminderPreviewList.innerHTML = previewMessages.map(function (item) {
+				return "<li>" + item + "</li>";
+			}).join("");
+			reminderPreviewEmpty.hidden = previewMessages.length > 0;
+		}
+
+		function openReminderDialog() {
+			if (!(reminderDialog instanceof HTMLDialogElement)) {
+				return;
+			}
+			renderReminderDialog();
+			reminderDialog.showModal();
+		}
+
 		function refreshInstallUi() {
 			if (!installAppBtn || !installDialogConfirm || !installSteps || !installStatus || !installDialogCopy) {
 				return;
 			}
 			if (isStandaloneApp()) {
 				installAppBtn.hidden = true;
+				refreshReminderSettingsButton();
 				installDialogConfirm.hidden = true;
 				installSteps.hidden = true;
 				installStatus.textContent = "這個 App 已經在主畫面上，可以直接開啟使用。";
@@ -1900,6 +2065,7 @@
 				return;
 			}
 			installAppBtn.hidden = false;
+			refreshReminderSettingsButton();
 			installAppBtn.textContent = "安裝APP";
 			if (deferredInstallPrompt) {
 				installDialogConfirm.hidden = false;
@@ -3394,6 +3560,7 @@
 			currentUser = user;
 			const isLoggedIn = Boolean(currentUser);
 			saveRememberedLoginUser(currentUser);
+			refreshReminderSettingsButton();
 			if (addBtn) {
 				addBtn.disabled = !isLoggedIn || !canEditCurrentView();
 			}
@@ -3455,6 +3622,12 @@
 			});
 		}
 
+		if (reminderSettingsBtn) {
+			reminderSettingsBtn.addEventListener("click", function () {
+				openReminderDialog();
+			});
+		}
+
 		if (installDialogClose) {
 			installDialogClose.addEventListener("click", function () {
 				if (installDialog instanceof HTMLDialogElement) {
@@ -3466,6 +3639,14 @@
 		if (installDialogConfirm) {
 			installDialogConfirm.addEventListener("click", function () {
 				triggerInstallPrompt();
+			});
+		}
+
+		if (reminderDialogClose) {
+			reminderDialogClose.addEventListener("click", function () {
+				if (reminderDialog instanceof HTMLDialogElement) {
+					reminderDialog.close();
+				}
 			});
 		}
 
@@ -3499,6 +3680,9 @@
 				closeEditChooser();
 				if (installDialog instanceof HTMLDialogElement && installDialog.open) {
 					installDialog.close();
+				}
+				if (reminderDialog instanceof HTMLDialogElement && reminderDialog.open) {
+					reminderDialog.close();
 				}
 			}
 		});
