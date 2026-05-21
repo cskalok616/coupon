@@ -1750,6 +1750,7 @@
 		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
 		const hiddenChannelStorageKeyPrefix = "voucherHiddenChannelsV1_";
 		const reminderStorageKeyPrefix = "voucherReminderV1_";
+		const loginSessionStorageKey = "voucherLastLoginUserV1";
 		const maxRecords = 8;
 		const autoLoginPassword = "123456";
 
@@ -1981,6 +1982,29 @@
 
 		function getReminderStorageKey(user) {
 			return reminderStorageKeyPrefix + user;
+		}
+
+		function getRememberedLoginUser() {
+			const username = window.localStorage.getItem(loginSessionStorageKey);
+			if (!username) {
+				return null;
+			}
+			const matched = loginUsers.find(function (item) {
+				return item.username === username;
+			});
+			if (!matched) {
+				window.localStorage.removeItem(loginSessionStorageKey);
+				return null;
+			}
+			return { username: matched.username, name: matched.name };
+		}
+
+		function saveRememberedLoginUser(user) {
+			if (!user || !user.username) {
+				window.localStorage.removeItem(loginSessionStorageKey);
+				return;
+			}
+			window.localStorage.setItem(loginSessionStorageKey, user.username);
 		}
 
 		function getChannelSelectionStorageKey(user) {
@@ -3369,6 +3393,7 @@
 		function setLoginState(user) {
 			currentUser = user;
 			const isLoggedIn = Boolean(currentUser);
+			saveRememberedLoginUser(currentUser);
 			if (addBtn) {
 				addBtn.disabled = !isLoggedIn || !canEditCurrentView();
 			}
@@ -3874,7 +3899,7 @@
 		}
 
 		switchViewUser("樂");
-		setLoginState(null);
+		setLoginState(getRememberedLoginUser());
 		refreshInstallUi();
 		initCloudSync();
 	</script>
