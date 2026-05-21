@@ -2876,11 +2876,34 @@
 			return typeof statusText === "string" && statusText.indexOf("已過期") === 0;
 		}
 
+		function isSameArchivedRecord(left, right) {
+			if (!left || !right) {
+				return false;
+			}
+			return left.channel === right.channel
+				&& left.phaseLabel === right.phaseLabel
+				&& left.phaseStartDate === right.phaseStartDate
+				&& left.expiryDate === right.expiryDate
+				&& normalizeNumber(left.voucher1) === normalizeNumber(right.voucher1)
+				&& normalizeNumber(left.voucher2) === normalizeNumber(right.voucher2)
+				&& normalizeNumber(left.voucher3) === normalizeNumber(right.voucher3)
+				&& normalizeNumber(left.voucherTotal) === normalizeNumber(right.voucherTotal)
+				&& normalizeNumber(left.spendingTotal) === normalizeNumber(right.spendingTotal)
+				&& left.status === right.status
+				&& (left.createdBy || currentViewUser) === (right.createdBy || currentViewUser);
+		}
+
+		function hasArchivedRecord(record) {
+			return expiredRecords.some(function (item) {
+				return isSameArchivedRecord(item, record);
+			});
+		}
+
 		function archiveRecord(record, statusText) {
 			const archivedRecord = Object.assign({}, record, { status: statusText });
 			expiredRecords = [archivedRecord].concat(expiredRecords).filter(function (item, index, array) {
 				return array.findIndex(function (candidate) {
-					return candidate.id === item.id;
+					return candidate.id === item.id || isSameArchivedRecord(candidate, item);
 				}) === index;
 			});
 		}
@@ -3399,12 +3422,13 @@
 					if (editingValue === 1) {
 						const archivedRecord = buildChannelArchiveRecord(pendingChannelSummary, "已消費");
 						const changed = setAllChannelSlotsUsed(pendingChannelSummary, true);
-						if (changed) {
-							if (archivedRecord) {
-								archiveRecord(archivedRecord, "已消費");
-								saveExpiredRecords();
-								renderExpiredRecords();
-							}
+						const shouldArchive = archivedRecord && !hasArchivedRecord(archivedRecord);
+						if (shouldArchive) {
+							archiveRecord(archivedRecord, "已消費");
+							saveExpiredRecords();
+							renderExpiredRecords();
+						}
+						if (changed || shouldArchive) {
 							hint.textContent = pendingChannelSummary + " 已全部標記為已使用。";
 						} else {
 							hint.textContent = pendingChannelSummary + " 目前沒有可標記的消費券。";
