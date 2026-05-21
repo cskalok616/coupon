@@ -1,10 +1,11 @@
-const CACHE_NAME = "voucher-app-shell-v1";
+const CACHE_NAME = "voucher-app-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icon-192.svg",
-  "./icon-512.svg",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./app icon.jpg",
   "./banner.jpg",
   "./MPay.webp",
   "./UePay.webp",

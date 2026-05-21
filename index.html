@@ -7,10 +7,10 @@
 	<meta name="theme-color" content="#1d6fd8" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-	<meta name="apple-mobile-web-app-title" content="消費券記錄" />
+	<meta name="apple-mobile-web-app-title" content="我的消費券" />
 	<link rel="manifest" href="manifest.webmanifest" />
-	<link rel="icon" href="icon-512.svg" type="image/svg+xml" />
-	<link rel="apple-touch-icon" href="icon-512.svg" />
+	<link rel="icon" href="icon-512.png" type="image/png" />
+	<link rel="apple-touch-icon" href="app icon.jpg" />
 	<style>
 		:root {
 			color-scheme: light;
@@ -145,6 +145,7 @@
 		}
 
 		#logoutBtn,
+		#installAppBtn,
 		#addBtn,
 		#finishBtn,
 		#cancelBtn,
@@ -167,8 +168,154 @@
 			display: none;
 		}
 
+		#installAppBtn {
+			border: 1px solid #1d6fd8;
+			background: linear-gradient(135deg, #1d6fd8 0%, #3689ef 100%);
+			color: #fff;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: 0.84rem;
+			font-weight: 700;
+			cursor: pointer;
+			box-shadow: 0 10px 24px rgba(29, 111, 216, 0.22);
+		}
+
+		#installAppBtn[hidden] {
+			display: none;
+		}
+
 		#logoutBtn.show {
 			display: inline-block;
+		}
+
+		.install-dialog {
+			width: min(460px, calc(100vw - 32px));
+			border: none;
+			border-radius: 24px;
+			padding: 0;
+			box-shadow: 0 28px 80px rgba(12, 38, 61, 0.3);
+			overflow: hidden;
+		}
+
+		.install-dialog::backdrop {
+			background: rgba(10, 22, 35, 0.45);
+			backdrop-filter: blur(3px);
+		}
+
+		.install-dialog-body {
+			padding: 20px;
+			background: linear-gradient(180deg, #f4fbff 0%, #ffffff 62%);
+		}
+
+		.install-hero {
+			display: grid;
+			grid-template-columns: 120px minmax(0, 1fr);
+			gap: 16px;
+			align-items: center;
+			margin-bottom: 16px;
+		}
+
+		.install-hero img {
+			width: 120px;
+			height: 120px;
+			object-fit: cover;
+			border-radius: 24px;
+			box-shadow: 0 16px 36px rgba(190, 52, 84, 0.22);
+		}
+
+		.install-kicker {
+			margin: 0 0 6px;
+			font-size: 0.75rem;
+			font-weight: 800;
+			letter-spacing: 0.08em;
+			color: #1d6fd8;
+		}
+
+		.install-title {
+			margin: 0;
+			font-size: 1.45rem;
+			line-height: 1.2;
+			color: #14344d;
+		}
+
+		.install-copy {
+			margin: 8px 0 0;
+			color: #49627a;
+			font-size: 0.95rem;
+			line-height: 1.5;
+		}
+
+		.install-steps {
+			margin: 0;
+			padding-left: 20px;
+			color: #234661;
+			line-height: 1.6;
+		}
+
+		.install-steps[hidden] {
+			display: none;
+		}
+
+		.install-status {
+			margin: 14px 0 0;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #edf6ff;
+			color: #19486f;
+			font-size: 0.92rem;
+			font-weight: 700;
+		}
+
+		.install-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 10px;
+			margin-top: 18px;
+		}
+
+		.install-secondary,
+		.install-primary {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 16px;
+			font-size: 0.92rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.install-secondary {
+			background: #eaf1f8;
+			color: #234661;
+		}
+
+		.install-primary {
+			background: linear-gradient(135deg, #e74b72 0%, #c62e57 100%);
+			color: #fff;
+			box-shadow: 0 12px 30px rgba(198, 46, 87, 0.28);
+		}
+
+		.install-primary[hidden] {
+			display: none;
+		}
+
+		@media (max-width: 640px) {
+			.install-hero {
+				grid-template-columns: 1fr;
+				text-align: center;
+			}
+
+			.install-hero img {
+				margin: 0 auto;
+			}
+
+			.install-actions {
+				flex-direction: column-reverse;
+			}
+
+			.install-secondary,
+			.install-primary {
+				width: 100%;
+			}
 		}
 
 		#addBtn {
@@ -1150,9 +1297,33 @@
 			<div class="topbar-actions">
 				<span id="currentViewTag" class="view-tag">目前檢視：樂</span>
 				<span id="currentUserTag" class="user-tag">未登入</span>
+				<button id="installAppBtn" type="button">安裝APP</button>
 				<button id="logoutBtn" type="button">登出</button>
 			</div>
 		</div>
+
+		<dialog id="installDialog" class="install-dialog">
+			<div class="install-dialog-body">
+				<div class="install-hero">
+					<img src="./app icon.jpg" alt="我的消費券安裝圖示" />
+					<div>
+						<p class="install-kicker">下載到主畫面</p>
+						<h2 class="install-title">我的消費券</h2>
+						<p id="installDialogCopy" class="install-copy">把這個 App 加到主畫面，之後可直接像一般 App 一樣開啟。</p>
+					</div>
+				</div>
+				<ol id="installSteps" class="install-steps">
+					<li>在 Safari 點分享按鈕。</li>
+					<li>選擇「加入主畫面」。</li>
+					<li>名稱保持「我的消費券」，再按「加入」。</li>
+				</ol>
+				<div id="installStatus" class="install-status">正在檢查目前瀏覽器是否支援直接安裝。</div>
+				<div class="install-actions">
+					<button id="installDialogClose" class="install-secondary" type="button">關閉</button>
+					<button id="installDialogConfirm" class="install-primary" type="button">立即安裝</button>
+				</div>
+			</div>
+		</dialog>
 
 		<section id="menuPanel" class="menu-panel" aria-label="支付渠道選項">
 			<div class="option-grid">
@@ -1601,7 +1772,14 @@
 		const accountButtons = Array.from(accountSwitcher.querySelectorAll(".member-pill"));
 		const currentViewTag = document.getElementById("currentViewTag");
 		const currentUserTag = document.getElementById("currentUserTag");
+		const installAppBtn = document.getElementById("installAppBtn");
 		const logoutBtn = document.getElementById("logoutBtn");
+		const installDialog = document.getElementById("installDialog");
+		const installDialogCopy = document.getElementById("installDialogCopy");
+		const installSteps = document.getElementById("installSteps");
+		const installStatus = document.getElementById("installStatus");
+		const installDialogClose = document.getElementById("installDialogClose");
+		const installDialogConfirm = document.getElementById("installDialogConfirm");
 		const addBtn = document.getElementById("addBtn");
 		const menuPanel = document.getElementById("menuPanel");
 		const optionButtons = Array.from(document.querySelectorAll(".option-btn"));
@@ -1651,6 +1829,7 @@
 		let editingValue = 0;
 		let currentUser = null;
 		let currentViewUser = "樂";
+		let deferredInstallPrompt = null;
 		let records = [];
 		let expiredRecords = [];
 		let realtimeDb = null;
@@ -1669,6 +1848,73 @@
 			"大豐 豐付寶": "豐付寶"
 		};
 		const channelNames = ["Mpay", "中銀", "工商", "國際", "豐付寶", "廣發", "支付寶", "UEpay"];
+
+		function isStandaloneApp() {
+			return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+		}
+
+		function isIosDevice() {
+			return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+		}
+
+		function refreshInstallUi() {
+			if (!installAppBtn || !installDialogConfirm || !installSteps || !installStatus || !installDialogCopy) {
+				return;
+			}
+			if (isStandaloneApp()) {
+				installAppBtn.textContent = "已安裝";
+				installDialogConfirm.hidden = true;
+				installSteps.hidden = true;
+				installStatus.textContent = "這個 App 已經在主畫面上，可以直接開啟使用。";
+				installDialogCopy.textContent = "你已經安裝完成，不需要再重複加入主畫面。";
+				return;
+			}
+			installAppBtn.textContent = "安裝APP";
+			if (deferredInstallPrompt) {
+				installDialogConfirm.hidden = false;
+				installSteps.hidden = true;
+				installStatus.textContent = "這個瀏覽器支援直接安裝，按下「立即安裝」即可。";
+				installDialogCopy.textContent = "安裝後會以「我的消費券」名稱顯示在主畫面。";
+				return;
+			}
+			installDialogConfirm.hidden = true;
+			installSteps.hidden = !isIosDevice();
+			installStatus.textContent = isIosDevice()
+				? "Safari 需要手動加入主畫面。圖示會使用你指定的圖片，名稱預設為「我的消費券」。"
+				: "如果目前瀏覽器沒有出現安裝提示，請改用 Chrome、Edge 或 Safari 再試。";
+			installDialogCopy.textContent = isIosDevice()
+				? "請依照下面步驟把 App 加到 iPhone 或 iPad 的主畫面。"
+				: "這個瀏覽器暫時未提供直接安裝按鈕，但安裝圖示與名稱已經設定完成。";
+		}
+
+		function openInstallDialog() {
+			if (!(installDialog instanceof HTMLDialogElement)) {
+				return;
+			}
+			refreshInstallUi();
+			installDialog.showModal();
+		}
+
+		async function triggerInstallPrompt() {
+			if (!deferredInstallPrompt) {
+				openInstallDialog();
+				return;
+			}
+			const promptEvent = deferredInstallPrompt;
+			deferredInstallPrompt = null;
+			refreshInstallUi();
+			promptEvent.prompt();
+			const choiceResult = await promptEvent.userChoice;
+			if (choiceResult && choiceResult.outcome === "accepted") {
+				hint.textContent = "已送出安裝要求，完成後會以「我的消費券」加入主畫面。";
+			} else {
+				hint.textContent = "已取消安裝，可稍後再按「安裝APP」。";
+			}
+			if (installDialog instanceof HTMLDialogElement && installDialog.open) {
+				installDialog.close();
+			}
+			refreshInstallUi();
+		}
 
 		function canEditCurrentView() {
 			if (!currentUser) {
@@ -3131,6 +3377,33 @@
 			setLoginState(null);
 		});
 
+		if (installAppBtn) {
+			installAppBtn.addEventListener("click", function () {
+				if (isStandaloneApp()) {
+					hint.textContent = "「我的消費券」已經安裝在主畫面。";
+				}
+				if (deferredInstallPrompt) {
+					triggerInstallPrompt();
+					return;
+				}
+				openInstallDialog();
+			});
+		}
+
+		if (installDialogClose) {
+			installDialogClose.addEventListener("click", function () {
+				if (installDialog instanceof HTMLDialogElement) {
+					installDialog.close();
+				}
+			});
+		}
+
+		if (installDialogConfirm) {
+			installDialogConfirm.addEventListener("click", function () {
+				triggerInstallPrompt();
+			});
+		}
+
 		if (addBtn) {
 			addBtn.addEventListener("click", function () {
 				if (!currentUser) {
@@ -3159,6 +3432,9 @@
 			if (event.key === "Escape") {
 				closeMenu();
 				closeEditChooser();
+				if (installDialog instanceof HTMLDialogElement && installDialog.open) {
+					installDialog.close();
+				}
 			}
 		});
 
@@ -3533,6 +3809,18 @@
 			}
 		});
 
+		window.addEventListener("beforeinstallprompt", function (event) {
+			event.preventDefault();
+			deferredInstallPrompt = event;
+			refreshInstallUi();
+		});
+
+		window.addEventListener("appinstalled", function () {
+			deferredInstallPrompt = null;
+			refreshInstallUi();
+			hint.textContent = "「我的消費券」已成功安裝到主畫面。";
+		});
+
 		window.setInterval(function () {
 			checkAutoReminders();
 		}, 60 * 1000);
@@ -3547,6 +3835,7 @@
 
 		switchViewUser("樂");
 		setLoginState(null);
+		refreshInstallUi();
 		initCloudSync();
 	</script>
 </body>
