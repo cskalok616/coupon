@@ -3048,10 +3048,11 @@
 			}
 			try {
 				const cleaned = getCleanArray(JSON.parse(raw));
-				if (cleaned.changed) {
-					localStorage.setItem(getExpiredStorageKey(user), JSON.stringify(cleaned.items));
+				const deduped = dedupeExpiredRecordsList(cleaned.items);
+				if (cleaned.changed || deduped.changed) {
+					localStorage.setItem(getExpiredStorageKey(user), JSON.stringify(deduped.items));
 				}
-				return cleaned.items;
+				return deduped.items;
 			} catch (error) {
 				return [];
 			}
@@ -3107,13 +3108,14 @@
 				}
 				const cleanedRecords = getCleanArray(data.records);
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
+				const dedupedExpiredRecords = dedupeExpiredRecordsList(cleanedExpiredRecords.items);
 				records = cleanedRecords.items;
-				expiredRecords = cleanedExpiredRecords.items;
+				expiredRecords = dedupedExpiredRecords.items;
 				channelSelections[currentViewUser] = sanitizeChannelStateMap(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {});
 				channelSelectionPeriods[currentViewUser] = sanitizeChannelStateMap(data.channelSelectionPeriods && typeof data.channelSelectionPeriods === "object" ? data.channelSelectionPeriods : {});
 				hiddenChannelItems[currentViewUser] = data.hiddenChannelItems && typeof data.hiddenChannelItems === "object" ? data.hiddenChannelItems : {};
 				persistLocal();
-				if (cleanedRecords.changed || cleanedExpiredRecords.changed) {
+				if (cleanedRecords.changed || cleanedExpiredRecords.changed || dedupedExpiredRecords.changed) {
 					syncCloudData();
 				}
 				renderAllChannelSlots();
@@ -3737,39 +3739,79 @@
 			return archivedChannelNames[channelName] || channelName;
 		}
 
+		function normalizeArchivedRecord(record) {
+			if (!record || typeof record !== "object") {
+				return record;
+			}
+			return Object.assign({}, record, {
+				channel: getArchivedChannelName(record.channel)
+			});
+		}
+
+		function getArchivedRecordKey(record) {
+			if (!record) {
+				return "";
+			}
+			return String(record.phaseLabel || "-") + "|" + String(getArchivedChannelName(record.channel) || "-");
+		}
+
+		function shouldReplaceArchivedRecord(currentRecord, nextRecord) {
+			const currentExpired = isExpiredStatus(currentRecord && currentRecord.status);
+			const nextExpired = isExpiredStatus(nextRecord && nextRecord.status);
+			if (currentExpired !== nextExpired) {
+				return currentExpired && !nextExpired;
+			}
+			return Number(nextRecord && nextRecord.id || 0) >= Number(currentRecord && currentRecord.id || 0);
+		}
+
+		function dedupeExpiredRecordsList(list) {
+			if (!Array.isArray(list)) {
+				return { items: [], changed: false };
+			}
+			const deduped = [];
+			let changed = false;
+			list.forEach(function (item) {
+				const normalizedItem = normalizeArchivedRecord(item);
+				const recordKey = getArchivedRecordKey(normalizedItem);
+				const existingIndex = deduped.findIndex(function (candidate) {
+					return getArchivedRecordKey(candidate) === recordKey;
+				});
+				if (existingIndex === -1) {
+					deduped.push(normalizedItem);
+					if (normalizedItem.channel !== item.channel) {
+						changed = true;
+					}
+					return;
+				}
+				changed = true;
+				if (shouldReplaceArchivedRecord(deduped[existingIndex], normalizedItem)) {
+					deduped[existingIndex] = normalizedItem;
+				}
+			});
+			return { items: deduped, changed: changed };
+		}
+
 		function isSameArchivedRecord(left, right) {
 			if (!left || !right) {
 				return false;
 			}
-			return getArchivedChannelName(left.channel) === getArchivedChannelName(right.channel)
-				&& left.phaseLabel === right.phaseLabel
-				&& left.phaseStartDate === right.phaseStartDate
-				&& left.expiryDate === right.expiryDate
-				&& normalizeNumber(left.voucher1) === normalizeNumber(right.voucher1)
-				&& normalizeNumber(left.voucher2) === normalizeNumber(right.voucher2)
-				&& normalizeNumber(left.voucher3) === normalizeNumber(right.voucher3)
-				&& normalizeNumber(left.voucherTotal) === normalizeNumber(right.voucherTotal)
-				&& normalizeNumber(left.spendingTotal) === normalizeNumber(right.spendingTotal)
-				&& left.status === right.status
-				&& (left.createdBy || currentViewUser) === (right.createdBy || currentViewUser);
+			return getArchivedRecordKey(left) === getArchivedRecordKey(right);
 		}
 
 		function hasArchivedRecord(record) {
+			const normalizedRecord = normalizeArchivedRecord(record);
 			return expiredRecords.some(function (item) {
-				return isSameArchivedRecord(item, record);
+				return isSameArchivedRecord(item, normalizedRecord)
+					&& !shouldReplaceArchivedRecord(normalizeArchivedRecord(item), normalizedRecord);
 			});
 		}
 
 		function archiveRecord(record, statusText) {
-			const archivedRecord = Object.assign({}, record, {
+			const archivedRecord = normalizeArchivedRecord(Object.assign({}, record, {
 				channel: getArchivedChannelName(record.channel),
 				status: statusText
-			});
-			expiredRecords = [archivedRecord].concat(expiredRecords).filter(function (item, index, array) {
-				return array.findIndex(function (candidate) {
-					return candidate.id === item.id || isSameArchivedRecord(candidate, item);
-				}) === index;
-			});
+			}));
+			expiredRecords = dedupeExpiredRecordsList([archivedRecord].concat(expiredRecords)).items;
 		}
 
 		function moveExpiredRecordsToArchive() {
