@@ -2063,6 +2063,24 @@
 			return changed;
 		}
 
+		function ensureChannelConsumedArchive(channelName) {
+			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
+			const allUsed = values.length > 0 && values.every(function (entry) {
+				return entry.used;
+			});
+			if (!allUsed) {
+				return false;
+			}
+			const archivedRecord = buildChannelArchiveRecord(channelName, "已消費");
+			if (!archivedRecord || hasArchivedRecord(archivedRecord)) {
+				return false;
+			}
+			archiveRecord(archivedRecord, "已消費");
+			saveExpiredRecords();
+			renderExpiredRecords();
+			return true;
+		}
+
 		function buildChannelArchiveRecord(channelName, statusText, periodMeta) {
 			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
 			if (values.length === 0) {
@@ -3400,7 +3418,10 @@
 							pendingChannelAction.slotIndex,
 							editingValue === 1
 						);
-						if (changed) {
+						const archived = editingValue === 1
+							? ensureChannelConsumedArchive(pendingChannelAction.channelName)
+							: false;
+						if (changed || archived) {
 							hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格已設為「" + actionLabels[editingValue] + "」。";
 							closeEditChooser();
 							return;
@@ -3420,15 +3441,9 @@
 						return;
 					}
 					if (editingValue === 1) {
-						const archivedRecord = buildChannelArchiveRecord(pendingChannelSummary, "已消費");
 						const changed = setAllChannelSlotsUsed(pendingChannelSummary, true);
-						const shouldArchive = archivedRecord && !hasArchivedRecord(archivedRecord);
-						if (shouldArchive) {
-							archiveRecord(archivedRecord, "已消費");
-							saveExpiredRecords();
-							renderExpiredRecords();
-						}
-						if (changed || shouldArchive) {
+						const archived = ensureChannelConsumedArchive(pendingChannelSummary);
+						if (changed || archived) {
 							hint.textContent = pendingChannelSummary + " 已全部標記為已使用。";
 						} else {
 							hint.textContent = pendingChannelSummary + " 目前沒有可標記的消費券。";
