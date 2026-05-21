@@ -364,6 +364,137 @@
 			line-height: 1.55;
 		}
 
+		.reminder-settings-group {
+			margin-top: 18px;
+			padding: 16px;
+			border: 1px solid #d9e9f7;
+			border-radius: 18px;
+			background: rgba(255, 255, 255, 0.9);
+		}
+
+		.reminder-switch-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+		}
+
+		.reminder-switch-copy {
+			flex: 1;
+		}
+
+		.reminder-switch-label {
+			font-size: 0.98rem;
+			font-weight: 800;
+			color: #14344d;
+		}
+
+		.reminder-switch-help {
+			margin-top: 4px;
+			font-size: 0.86rem;
+			line-height: 1.5;
+			color: #5d7489;
+		}
+
+		.reminder-switch-list {
+			display: grid;
+			gap: 12px;
+			margin-top: 14px;
+		}
+
+		.reminder-switch-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+		}
+
+		.reminder-time-grid {
+			display: grid;
+			gap: 10px;
+			margin-top: 14px;
+		}
+
+		.reminder-time-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #f4f9ff;
+		}
+
+		.reminder-time-label {
+			font-size: 0.92rem;
+			font-weight: 700;
+			color: #234661;
+		}
+
+		.reminder-time-input {
+			border: 1px solid #c9d9ea;
+			border-radius: 10px;
+			padding: 8px 10px;
+			font-size: 0.92rem;
+			font-weight: 700;
+			color: #14344d;
+			background: #ffffff;
+		}
+
+		.reminder-time-input:disabled {
+			background: #eef3f7;
+			color: #7e91a4;
+		}
+
+		.ios-switch {
+			position: relative;
+			display: inline-flex;
+			width: 52px;
+			height: 32px;
+			flex: 0 0 52px;
+		}
+
+		.ios-switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+			position: absolute;
+		}
+
+		.ios-switch-slider {
+			position: absolute;
+			inset: 0;
+			border-radius: 999px;
+			background: #c8d3de;
+			transition: background 0.2s ease;
+			box-shadow: inset 0 0 0 1px rgba(18, 48, 74, 0.08);
+		}
+
+		.ios-switch-slider::before {
+			content: "";
+			position: absolute;
+			top: 3px;
+			left: 3px;
+			width: 26px;
+			height: 26px;
+			border-radius: 50%;
+			background: #ffffff;
+			box-shadow: 0 2px 6px rgba(16, 50, 79, 0.22);
+			transition: transform 0.2s ease;
+		}
+
+		.ios-switch input:checked + .ios-switch-slider {
+			background: #34c759;
+		}
+
+		.ios-switch input:checked + .ios-switch-slider::before {
+			transform: translateX(20px);
+		}
+
+		.ios-switch input:disabled + .ios-switch-slider {
+			opacity: 0.55;
+		}
+
 		.reminder-section-title {
 			margin: 18px 0 8px;
 			font-size: 0.9rem;
@@ -1437,7 +1568,51 @@
 		<dialog id="reminderDialog" class="reminder-dialog">
 			<div class="reminder-dialog-body">
 				<h2 class="reminder-title">設定提醒</h2>
-				<p class="reminder-copy">這裡會顯示目前 App 自動提醒的時間規則，以及現在會發出的提醒內容預覽。</p>
+				<p class="reminder-copy">你可以在這裡控制提醒總開關、抽獎或消費券提醒類型，以及每次自動提醒的時間。</p>
+				<div class="reminder-settings-group">
+					<div class="reminder-switch-row">
+						<div class="reminder-switch-copy">
+							<div class="reminder-switch-label">啟用提醒</div>
+							<div class="reminder-switch-help">關閉後，這個帳號的所有自動提醒都會停止。</div>
+						</div>
+						<label class="ios-switch" for="reminderEnabledToggle">
+							<input id="reminderEnabledToggle" type="checkbox" />
+							<span class="ios-switch-slider"></span>
+						</label>
+					</div>
+					<div class="reminder-switch-list">
+						<div class="reminder-switch-item">
+							<div class="reminder-switch-copy">
+								<div class="reminder-switch-label">抽獎到期提醒</div>
+								<div class="reminder-switch-help">根據抽獎期結束日發出提醒。</div>
+							</div>
+							<label class="ios-switch" for="reminderLotteryToggle">
+								<input id="reminderLotteryToggle" type="checkbox" />
+								<span class="ios-switch-slider"></span>
+							</label>
+						</div>
+						<div class="reminder-switch-item">
+							<div class="reminder-switch-copy">
+								<div class="reminder-switch-label">消費到期提醒</div>
+								<div class="reminder-switch-help">根據消費券使用期限發出提醒。</div>
+							</div>
+							<label class="ios-switch" for="reminderSpendingToggle">
+								<input id="reminderSpendingToggle" type="checkbox" />
+								<span class="ios-switch-slider"></span>
+							</label>
+						</div>
+					</div>
+					<div class="reminder-time-grid">
+						<div class="reminder-time-row">
+							<label class="reminder-time-label" for="reminderDayBeforeTime">到期前一天提醒時間</label>
+							<input id="reminderDayBeforeTime" class="reminder-time-input" type="time" value="12:00" />
+						</div>
+						<div class="reminder-time-row">
+							<label class="reminder-time-label" for="reminderSameDayTime">到期當天提醒時間</label>
+							<input id="reminderSameDayTime" class="reminder-time-input" type="time" value="12:00" />
+						</div>
+					</div>
+				</div>
 				<h3 class="reminder-section-title">自動提醒時間</h3>
 				<ul id="reminderRuleList" class="reminder-rule-list"></ul>
 				<h3 class="reminder-section-title">目前提醒內容預覽</h3>
@@ -1911,6 +2086,11 @@
 		const reminderPreviewList = document.getElementById("reminderPreviewList");
 		const reminderPreviewEmpty = document.getElementById("reminderPreviewEmpty");
 		const reminderDialogClose = document.getElementById("reminderDialogClose");
+		const reminderEnabledToggle = document.getElementById("reminderEnabledToggle");
+		const reminderLotteryToggle = document.getElementById("reminderLotteryToggle");
+		const reminderSpendingToggle = document.getElementById("reminderSpendingToggle");
+		const reminderDayBeforeTime = document.getElementById("reminderDayBeforeTime");
+		const reminderSameDayTime = document.getElementById("reminderSameDayTime");
 		const addBtn = document.getElementById("addBtn");
 		const menuPanel = document.getElementById("menuPanel");
 		const optionButtons = Array.from(document.querySelectorAll(".option-btn"));
@@ -2005,35 +2185,184 @@
 			reminderSettingsBtn.hidden = !(Boolean(currentUser) && isStandaloneApp());
 		}
 
-		function buildReminderPreviewMessages() {
-			const previewMessages = [];
-			const activeRecords = records.filter(function (record) {
-				ensurePeriodData(record);
-				return Boolean(record.expiryDate) && !isExpiredStatus(record.status);
+		function isValidReminderTime(value) {
+			return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+		}
+
+		function createDefaultReminderSettings() {
+			return {
+				enabled: true,
+				types: {
+					lottery: true,
+					spending: true
+				},
+				times: {
+					dayBefore: "12:00",
+					sameDay: "12:00"
+				}
+			};
+		}
+
+		function normalizeReminderFlagMap(flags) {
+			const source = flags && typeof flags === "object" ? flags : {};
+			const normalized = {};
+			Object.keys(source).forEach(function (key) {
+				if (key && source[key]) {
+					normalized[key] = source[key];
+				}
 			});
-			activeRecords.slice(0, 3).forEach(function (record) {
-				previewMessages.push(currentViewUser + " 的 " + record.channel + " 明天到期（到期日 " + record.expiryDate + "）");
-				previewMessages.push(currentViewUser + " 的 " + record.channel + " 今天到期（到期日 " + record.expiryDate + "）");
-			});
-			if (previewMessages.length) {
-				return previewMessages;
+			return normalized;
+		}
+
+		function normalizeReminderSettings(settings) {
+			const defaults = createDefaultReminderSettings();
+			const source = settings && typeof settings === "object" ? settings : {};
+			const types = source.types && typeof source.types === "object" ? source.types : {};
+			const times = source.times && typeof source.times === "object" ? source.times : {};
+			return {
+				enabled: typeof source.enabled === "boolean" ? source.enabled : defaults.enabled,
+				types: {
+					lottery: typeof types.lottery === "boolean" ? types.lottery : defaults.types.lottery,
+					spending: typeof types.spending === "boolean" ? types.spending : defaults.types.spending
+				},
+				times: {
+					dayBefore: isValidReminderTime(times.dayBefore) ? times.dayBefore : defaults.times.dayBefore,
+					sameDay: isValidReminderTime(times.sameDay) ? times.sameDay : defaults.times.sameDay
+				}
+			};
+		}
+
+		function loadReminderState(user) {
+			const defaults = createDefaultReminderSettings();
+			const raw = localStorage.getItem(getReminderStorageKey(user));
+			if (!raw) {
+				return {
+					settings: defaults,
+					flags: {}
+				};
 			}
-			const previewOwner = currentUser ? currentUser.name : currentViewUser;
+			try {
+				const parsed = JSON.parse(raw);
+				if (parsed && typeof parsed === "object" && (parsed.settings || parsed.flags)) {
+					return {
+						settings: normalizeReminderSettings(parsed.settings),
+						flags: normalizeReminderFlagMap(parsed.flags)
+					};
+				}
+				return {
+					settings: defaults,
+					flags: normalizeReminderFlagMap(parsed)
+				};
+			} catch (error) {
+				return {
+					settings: defaults,
+					flags: {}
+				};
+			}
+		}
+
+		function saveReminderState(user, state) {
+			localStorage.setItem(getReminderStorageKey(user), JSON.stringify({
+				settings: normalizeReminderSettings(state && state.settings),
+				flags: normalizeReminderFlagMap(state && state.flags)
+			}));
+		}
+
+		function updateReminderSettings(mutator) {
+			if (!currentViewUser) {
+				return;
+			}
+			const reminderState = loadReminderState(currentViewUser);
+			const nextSettings = normalizeReminderSettings(mutator(reminderState.settings));
+			saveReminderState(currentViewUser, {
+				settings: nextSettings,
+				flags: reminderState.flags
+			});
+			renderReminderDialog();
+			checkAutoReminders();
+		}
+
+		function getLotteryExpiryDate(record) {
+			const phaseStartDate = parseDateString(record.phaseStartDate);
+			if (!phaseStartDate) {
+				return "";
+			}
+			const lotteryDate = new Date(phaseStartDate);
+			lotteryDate.setDate(lotteryDate.getDate() + 2);
+			return formatDate(lotteryDate);
+		}
+
+		function getReminderTargetConfigs() {
 			return [
-				previewOwner + " 的 支付渠道 明天到期（到期日 YYYY-MM-DD）",
-				previewOwner + " 的 支付渠道 今天到期（到期日 YYYY-MM-DD）"
+				{
+					key: "lottery",
+					notificationTitle: "抽獎提醒",
+					dayBeforeText: "抽獎明天到期",
+					sameDayText: "抽獎今天到期",
+					getDeadline: function (record) {
+						return getLotteryExpiryDate(record);
+					}
+				},
+				{
+					key: "spending",
+					notificationTitle: "消費券提醒",
+					dayBeforeText: "消費券明天到期",
+					sameDayText: "消費券今天到期",
+					getDeadline: function (record) {
+						return record.expiryDate;
+					}
+				}
 			];
+		}
+
+		function buildReminderPreviewMessages(settings) {
+			if (!settings.enabled) {
+				return [];
+			}
+			const previewMessages = [];
+			getReminderTargetConfigs().forEach(function (target) {
+				if (!settings.types[target.key]) {
+					return;
+				}
+				previewMessages.push(target.dayBeforeText + "（到期日 YYYY-MM-DD）");
+				previewMessages.push(target.sameDayText + "（到期日 YYYY-MM-DD）");
+			});
+			return previewMessages;
 		}
 
 		function renderReminderDialog() {
 			if (!reminderRuleList || !reminderPreviewList || !reminderPreviewEmpty) {
 				return;
 			}
+			const reminderState = currentViewUser ? loadReminderState(currentViewUser) : {
+				settings: createDefaultReminderSettings(),
+				flags: {}
+			};
+			const settings = reminderState.settings;
 			const reminderRules = [
-				"到期前一天中午 12:00 自動提醒一次。",
-				"到期當天中午 12:00 自動提醒一次。"
+				"到期前一天 " + settings.times.dayBefore + " 自動提醒一次。",
+				"到期當天 " + settings.times.sameDay + " 自動提醒一次。"
 			];
-			const previewMessages = buildReminderPreviewMessages();
+			const previewMessages = buildReminderPreviewMessages(settings);
+			if (reminderEnabledToggle) {
+				reminderEnabledToggle.checked = settings.enabled;
+			}
+			if (reminderLotteryToggle) {
+				reminderLotteryToggle.checked = settings.types.lottery;
+				reminderLotteryToggle.disabled = !settings.enabled;
+			}
+			if (reminderSpendingToggle) {
+				reminderSpendingToggle.checked = settings.types.spending;
+				reminderSpendingToggle.disabled = !settings.enabled;
+			}
+			if (reminderDayBeforeTime) {
+				reminderDayBeforeTime.value = settings.times.dayBefore;
+				reminderDayBeforeTime.disabled = !settings.enabled;
+			}
+			if (reminderSameDayTime) {
+				reminderSameDayTime.value = settings.times.sameDay;
+				reminderSameDayTime.disabled = !settings.enabled;
+			}
 			reminderRuleList.innerHTML = reminderRules.map(function (item) {
 				return "<li>" + item + "</li>";
 			}).join("");
@@ -2041,6 +2370,15 @@
 				return "<li>" + item + "</li>";
 			}).join("");
 			reminderPreviewEmpty.hidden = previewMessages.length > 0;
+			if (!settings.enabled) {
+				reminderPreviewEmpty.hidden = false;
+				reminderPreviewEmpty.textContent = "提醒目前已關閉。";
+			} else if (!settings.types.lottery && !settings.types.spending) {
+				reminderPreviewEmpty.hidden = false;
+				reminderPreviewEmpty.textContent = "請至少打開一種提醒類型。";
+			} else {
+				reminderPreviewEmpty.textContent = "目前沒有可預覽的到期提醒內容。";
+			}
 		}
 
 		function openReminderDialog() {
@@ -2662,23 +3000,6 @@
 			return true;
 		}
 
-		function loadReminderFlags(user) {
-			const raw = localStorage.getItem(getReminderStorageKey(user));
-			if (!raw) {
-				return {};
-			}
-			try {
-				const parsed = JSON.parse(raw);
-				return parsed && typeof parsed === "object" ? parsed : {};
-			} catch (error) {
-				return {};
-			}
-		}
-
-		function saveReminderFlags(user, flags) {
-			localStorage.setItem(getReminderStorageKey(user), JSON.stringify(flags));
-		}
-
 		function normalizeChannelName(channel) {
 			if (typeof channel !== "string") {
 				return channel;
@@ -2911,13 +3232,16 @@
 			reminderNote.classList.add("show");
 		}
 
-		function buildReminderTime(expiryDateStr, dayOffset) {
+		function buildReminderTime(expiryDateStr, timeValue, dayOffset) {
 			const reminderDate = parseDateString(expiryDateStr);
-			if (!reminderDate) {
+			if (!reminderDate || !isValidReminderTime(timeValue)) {
 				return null;
 			}
+			const timeParts = timeValue.split(":");
+			const hours = Number(timeParts[0]);
+			const minutes = Number(timeParts[1]);
 			reminderDate.setDate(reminderDate.getDate() + dayOffset);
-			reminderDate.setHours(12, 0, 0, 0);
+			reminderDate.setHours(hours, minutes, 0, 0);
 			return reminderDate;
 		}
 
@@ -2937,50 +3261,72 @@
 				return;
 			}
 			const now = new Date();
-			const reminderFlags = loadReminderFlags(currentViewUser);
+			const reminderState = loadReminderState(currentViewUser);
+			const reminderSettings = reminderState.settings;
+			const reminderFlags = reminderState.flags;
+			if (!reminderSettings.enabled || (!reminderSettings.types.lottery && !reminderSettings.types.spending)) {
+				showReminderMessages([]);
+				return;
+			}
 			const dueMessages = [];
 			const pendingNotifications = [];
+			const seenReminderKeys = {};
 			let flagsChanged = false;
 			const reminderConfigs = [
-				{ key: "day-before", offset: -1, label: "明天到期" },
-				{ key: "same-day", offset: 0, label: "今天到期" }
+				{ key: "day-before", offset: -1, time: reminderSettings.times.dayBefore, getMessageText: function (target) { return target.dayBeforeText; } },
+				{ key: "same-day", offset: 0, time: reminderSettings.times.sameDay, getMessageText: function (target) { return target.sameDayText; } }
 			];
+			const reminderTargets = getReminderTargetConfigs().filter(function (target) {
+				return reminderSettings.types[target.key];
+			});
 
 			records.forEach(function (record) {
 				ensurePeriodData(record);
-				if (!record.expiryDate || isExpiredStatus(record.status)) {
+				if (isExpiredStatus(record.status)) {
 					return;
 				}
-				reminderConfigs.forEach(function (config) {
-					const reminderTime = buildReminderTime(record.expiryDate, config.offset);
-					if (!reminderTime || now < reminderTime) {
+				reminderTargets.forEach(function (target) {
+					const deadlineDate = target.getDeadline(record);
+					if (!deadlineDate) {
 						return;
 					}
-					const reminderDayEnd = new Date(reminderTime);
-					reminderDayEnd.setDate(reminderDayEnd.getDate() + 1);
-					if (now >= reminderDayEnd) {
-						return;
-					}
-					const reminderDayKey = formatDate(reminderTime);
-					const reminderFlagKey = record.id + ":" + config.key + ":" + reminderDayKey;
-					const message = currentViewUser + " 的 " + record.channel + " " + config.label + "（到期日 " + record.expiryDate + "）";
-					dueMessages.push(message);
-					if (reminderFlags[reminderFlagKey]) {
-						return;
-					}
-					reminderFlags[reminderFlagKey] = Date.now();
-					flagsChanged = true;
-					pendingNotifications.push({
-						title: "消費券提醒",
-						message: message,
-						tag: reminderFlagKey
+					reminderConfigs.forEach(function (config) {
+						const reminderTime = buildReminderTime(deadlineDate, config.time, config.offset);
+						if (!reminderTime || now < reminderTime) {
+							return;
+						}
+						const reminderDayEnd = new Date(reminderTime);
+						reminderDayEnd.setDate(reminderDayEnd.getDate() + 1);
+						if (now >= reminderDayEnd) {
+							return;
+						}
+						const reminderMessageText = config.getMessageText(target);
+						const reminderFlagKey = target.key + ":" + config.key + ":" + deadlineDate + ":" + config.time;
+						const message = reminderMessageText + "（到期日 " + deadlineDate + "）";
+						if (!seenReminderKeys[reminderFlagKey]) {
+							seenReminderKeys[reminderFlagKey] = true;
+							dueMessages.push(message);
+						}
+						if (reminderFlags[reminderFlagKey]) {
+							return;
+						}
+						reminderFlags[reminderFlagKey] = Date.now();
+						flagsChanged = true;
+						pendingNotifications.push({
+							title: target.notificationTitle,
+							message: message,
+							tag: reminderFlagKey
+						});
 					});
 				});
 			});
 
 			showReminderMessages(dueMessages);
 			if (flagsChanged) {
-				saveReminderFlags(currentViewUser, reminderFlags);
+				saveReminderState(currentViewUser, {
+					settings: reminderSettings,
+					flags: reminderFlags
+				});
 			}
 			pendingNotifications.forEach(function (item) {
 				notifyReminder(item.title, item.message, item.tag);
@@ -3625,6 +3971,70 @@
 		if (reminderSettingsBtn) {
 			reminderSettingsBtn.addEventListener("click", function () {
 				openReminderDialog();
+			});
+		}
+
+		if (reminderEnabledToggle) {
+			reminderEnabledToggle.addEventListener("change", function () {
+				updateReminderSettings(function (settings) {
+					return Object.assign({}, settings, {
+						enabled: reminderEnabledToggle.checked
+					});
+				});
+			});
+		}
+
+		if (reminderLotteryToggle) {
+			reminderLotteryToggle.addEventListener("change", function () {
+				updateReminderSettings(function (settings) {
+					return Object.assign({}, settings, {
+						types: Object.assign({}, settings.types, {
+							lottery: reminderLotteryToggle.checked
+						})
+					});
+				});
+			});
+		}
+
+		if (reminderSpendingToggle) {
+			reminderSpendingToggle.addEventListener("change", function () {
+				updateReminderSettings(function (settings) {
+					return Object.assign({}, settings, {
+						types: Object.assign({}, settings.types, {
+							spending: reminderSpendingToggle.checked
+						})
+					});
+				});
+			});
+		}
+
+		if (reminderDayBeforeTime) {
+			reminderDayBeforeTime.addEventListener("change", function () {
+				if (!isValidReminderTime(reminderDayBeforeTime.value)) {
+					return;
+				}
+				updateReminderSettings(function (settings) {
+					return Object.assign({}, settings, {
+						times: Object.assign({}, settings.times, {
+							dayBefore: reminderDayBeforeTime.value
+						})
+					});
+				});
+			});
+		}
+
+		if (reminderSameDayTime) {
+			reminderSameDayTime.addEventListener("change", function () {
+				if (!isValidReminderTime(reminderSameDayTime.value)) {
+					return;
+				}
+				updateReminderSettings(function (settings) {
+					return Object.assign({}, settings, {
+						times: Object.assign({}, settings.times, {
+							sameDay: reminderSameDayTime.value
+						})
+					});
+				});
 			});
 		}
 
