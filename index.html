@@ -1633,7 +1633,6 @@
 				<button class="option-btn" type="button">支付寶</button>
 				<button class="option-btn" type="button">國際銀行</button>
 				<button class="option-btn" type="button">工商銀行</button>
-				<button class="option-btn" type="button">UePay</button>
 				<button class="option-btn" type="button">豐付寶</button>
 				<button class="option-btn" type="button">廣發錢包</button>
 			</div>
@@ -2755,7 +2754,7 @@
 		}
 
 		function getChannelAddButtonMarkup(channelName) {
-			return "<button class=\"channel-placeholder\" type=\"button\" data-channel=\"" + channelName + "\"><span class=\"channel-add-symbol\">+</span><span class=\"channel-add-label\">添加</span></button>";
+			return "<button class=\"channel-placeholder\" type=\"button\" data-channel=\"" + channelName + "\"><span class=\"channel-add-symbol">+</span><span class=\"channel-add-label\">添加</span></button>";
 		}
 
 		function normalizeChannelSlotEntry(entry) {
@@ -4934,11 +4933,12 @@
 		});
 
 		expiredToggleBtn.addEventListener("click", function () {
-			const isOpen = expiredSection.classList.toggle("show");
-			expiredToggleBtn.setAttribute("aria-expanded", String(isOpen));
-			expiredToggleBtn.textContent = isOpen ? "收起已使用/已過期的消費券" : "查看已使用/已過期的消費券";
-			if (isOpen) {
-				renderExpiredRecords();
+			const isExpanded = expiredSection.classList.toggle("show");
+			expiredToggleBtn.setAttribute("aria-expanded", isExpanded);
+			if (isExpanded) {
+				expiredToggleBtn.textContent = "收起已消費/已過期的消費券";
+			} else {
+				expiredToggleBtn.textContent = "查看已消費/已過期的消費券";
 			}
 		});
 
