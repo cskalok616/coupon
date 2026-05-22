@@ -3003,7 +3003,7 @@
 		}
 
 		function moveExpiredChannelSelectionsToArchive() {
-			let moved = false;
+			let archived = false;
 			channelNames.forEach(function (channelName) {
 				const values = getChannelSelectionList(channelName);
 				if (!values.length) {
@@ -3015,15 +3015,12 @@
 					return;
 				}
 				const archivedRecord = buildChannelArchiveRecord(channelName, "已過期", periodMeta);
-				if (archivedRecord) {
+				if (archivedRecord && !hasArchivedRecord(archivedRecord)) {
 					archiveRecord(archivedRecord, "已過期");
-					moved = true;
+					archived = true;
 				}
-				values.length = 0;
-				clearChannelPeriodMeta(channelName);
 			});
-			if (moved) {
-				saveChannelState();
+			if (archived) {
 				saveExpiredRecords();
 			}
 		}
@@ -3902,24 +3899,19 @@
 			if (records.length === 0) {
 				return;
 			}
-			const active = [];
-			const moved = [];
+			let archived = false;
 			records.forEach(function (record) {
 				ensurePeriodData(record);
 				if (isExpiredStatus(record.status)) {
-					moved.push(record);
-				} else {
-					active.push(record);
+					if (!hasArchivedRecord(record)) {
+						archiveRecord(record, record.status);
+						archived = true;
+					}
 				}
 			});
-			if (moved.length === 0) {
+			if (!archived) {
 				return;
 			}
-			records = active;
-			moved.forEach(function (record) {
-				archiveRecord(record, record.status);
-			});
-			saveRecords();
 			saveExpiredRecords();
 		}
 
