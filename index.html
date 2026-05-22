@@ -2026,8 +2026,12 @@
 		};
 
 		const cloudRootPath = "voucher_app/group_shared";
+		const cloudBackupRootPath = "voucher_app/group_shared_backups";
+		const cloudDailyBackupRootPath = "voucher_app/group_shared_daily_backup";
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
+		const expiredBackupStorageKeyPrefix = "voucherExpiredBackupsV1_";
+		const dailyBackupScheduleStorageKey = "voucherDailyBackupScheduleV1";
 		const channelSelectionStorageKeyPrefix = "voucherChannelSelectionsV1_";
 		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
 		const hiddenChannelStorageKeyPrefix = "voucherHiddenChannelsV1_";
@@ -2145,8 +2149,10 @@
 		let deferredInstallPrompt = null;
 		let records = [];
 		let expiredRecords = [];
+		let expiredRecordBackups = {};
 		let realtimeDb = null;
 		let cloudSyncReady = false;
+		let cloudSnapshotReady = false;
 		let cloudRef = null;
 		let cloudHandler = null;
 		const delegatedEditors = {
@@ -2490,6 +2496,10 @@
 
 		function getExpiredStorageKey(user) {
 			return expiredStorageKeyPrefix + user;
+		}
+
+		function getExpiredBackupStorageKey(user) {
+			return expiredBackupStorageKeyPrefix + user;
 		}
 
 		function getReminderStorageKey(user) {
@@ -3074,6 +3084,72 @@
 			return selectionChannelNames[normalized] || normalized;
 		}
 
+		function getCurrentRecordId(channelName) {
+			return "channel:" + channelName;
+		}
+
+		function buildCurrentRecordFromChannel(user, channelName, slotList, periodMeta) {
+			const values = (Array.isArray(slotList) ? slotList : []).slice(0, 3).map(normalizeChannelSlotEntry);
+			if (!values.length) {
+				return null;
+			}
+			const hasUnusedVoucher = values.some(function (entry) {
+				return !entry.used;
+			});
+			if (!hasUnusedVoucher) {
+				return null;
+			}
+			const voucherValues = values.map(function (entry) {
+				return entry.used ? 0 : normalizeNumber(entry.value);
+			});
+			while (voucherValues.length < 3) {
+				voucherValues.push(0);
+			}
+			const meta = periodMeta && typeof periodMeta === "object" ? periodMeta : {};
+			const phaseStartDate = meta.phaseStartDate || "-";
+			const expiryDate = meta.expiryDate || "-";
+			return {
+				id: getCurrentRecordId(channelName),
+				createdBy: user,
+				phaseLabel: meta.phaseLabel || "-",
+				phaseStartDate: phaseStartDate,
+				channel: channelName,
+				createdDate: phaseStartDate !== "-" ? phaseStartDate : "-",
+				voucher1: voucherValues[0],
+				voucher2: voucherValues[1],
+				voucher3: voucherValues[2],
+				voucherTotal: voucherValues[0] + voucherValues[1] + voucherValues[2],
+				spendingTotal: (voucherValues[0] + voucherValues[1] + voucherValues[2]) * 3,
+				expiryDate: expiryDate,
+				status: getStatus(phaseStartDate, expiryDate)
+			};
+		}
+
+		function buildCurrentRecordsFromState(user, selectionState, periodState) {
+			const selections = sanitizeChannelStateMap(selectionState);
+			const periods = sanitizeChannelStateMap(periodState);
+			const seen = {};
+			const orderedChannelNames = channelNames.concat(Object.keys(selections)).filter(function (channelName) {
+				if (!channelName || seen[channelName]) {
+					return false;
+				}
+				seen[channelName] = true;
+				return true;
+			});
+			return orderedChannelNames.map(function (channelName) {
+				return buildCurrentRecordFromChannel(user, channelName, selections[channelName], periods[channelName]);
+			}).filter(Boolean);
+		}
+
+		function refreshCurrentRecords() {
+			records = buildCurrentRecordsFromState(
+				currentViewUser,
+				getChannelSelectionState(currentViewUser),
+				getChannelSelectionPeriodState(currentViewUser)
+			);
+			return records;
+		}
+
 		function getCleanArray(list) {
 			if (!Array.isArray(list)) {
 				return { items: [], changed: false };
@@ -3125,6 +3201,74 @@
 			}
 		}
 
+		function getExpiredRecordBackupState(user) {
+			if (!expiredRecordBackups[user]) {
+				expiredRecordBackups[user] = loadObjectState(getExpiredBackupStorageKey(user));
+			}
+			return expiredRecordBackups[user];
+		}
+
+		function cloneBackupRecord(record) {
+			return {
+				id: record.id,
+				createdBy: record.createdBy || currentViewUser,
+				phaseLabel: record.phaseLabel || "-",
+				phaseStartDate: record.phaseStartDate || "-",
+				channel: getArchivedChannelName(record.channel),
+				createdDate: record.createdDate || "-",
+				voucher1: normalizeNumber(record.voucher1),
+				voucher2: normalizeNumber(record.voucher2),
+				voucher3: normalizeNumber(record.voucher3),
+				voucherTotal: normalizeNumber(record.voucherTotal),
+				spendingTotal: normalizeNumber(record.spendingTotal),
+				expiryDate: record.expiryDate || "unknown",
+				status: record.status || "-"
+			};
+		}
+
+		function upsertExpiredRecordBackups(user, recordList) {
+			if (!user || !Array.isArray(recordList) || recordList.length === 0) {
+				return false;
+			}
+			const backupState = getExpiredRecordBackupState(user);
+			const groups = {};
+			recordList.forEach(function (record) {
+				if (!record || typeof record.channel !== "string") {
+					return;
+				}
+				const expiryDate = record.expiryDate || "unknown";
+				if (!groups[expiryDate]) {
+					groups[expiryDate] = [];
+				}
+				groups[expiryDate].push(cloneBackupRecord(record));
+			});
+			let changed = false;
+			Object.keys(groups).forEach(function (expiryDate) {
+				const dedupedItems = dedupeExpiredRecordsList(groups[expiryDate]).items;
+				const nextItemsJson = JSON.stringify(dedupedItems);
+				const currentItemsJson = JSON.stringify(backupState[expiryDate] && Array.isArray(backupState[expiryDate].items) ? backupState[expiryDate].items : []);
+				if (nextItemsJson === currentItemsJson) {
+					return;
+				}
+				backupState[expiryDate] = {
+					expiryDate: expiryDate,
+					savedAt: Date.now(),
+					items: dedupedItems
+				};
+				changed = true;
+			});
+			return changed;
+		}
+
+		function syncExpiredRecordBackups() {
+			if (!cloudSyncReady || !realtimeDb || !currentViewUser) {
+				return;
+			}
+			realtimeDb.ref(cloudBackupRootPath + "/" + currentViewUser).update(getExpiredRecordBackupState(currentViewUser)).catch(function (error) {
+				console.error("Firebase 備份寫入失敗", error);
+			});
+		}
+
 		function loadObjectState(storageKey) {
 			const raw = localStorage.getItem(storageKey);
 			if (!raw) {
@@ -3139,14 +3283,16 @@
 		}
 
 		function persistLocal() {
-			localStorage.setItem(getStorageKey(currentViewUser), JSON.stringify(records));
+			localStorage.removeItem(getStorageKey(currentViewUser));
 			localStorage.setItem(getExpiredStorageKey(currentViewUser), JSON.stringify(expiredRecords));
+			localStorage.setItem(getExpiredBackupStorageKey(currentViewUser), JSON.stringify(getExpiredRecordBackupState(currentViewUser)));
 			localStorage.setItem(getChannelSelectionStorageKey(currentViewUser), JSON.stringify(sanitizeChannelStateMap(getChannelSelectionState(currentViewUser))));
 			localStorage.setItem(getChannelPeriodStorageKey(currentViewUser), JSON.stringify(sanitizeChannelStateMap(getChannelSelectionPeriodState(currentViewUser))));
 			localStorage.setItem(getHiddenChannelStorageKey(currentViewUser), JSON.stringify(getHiddenChannelItemState(currentViewUser)));
 		}
 
 		function loadChannelState(user) {
+			getExpiredRecordBackupState(user);
 			channelSelections[user] = sanitizeChannelStateMap(loadObjectState(getChannelSelectionStorageKey(user)));
 			channelSelectionPeriods[user] = sanitizeChannelStateMap(loadObjectState(getChannelPeriodStorageKey(user)));
 			hiddenChannelItems[user] = loadObjectState(getHiddenChannelStorageKey(user));
@@ -3163,6 +3309,7 @@
 			if (!realtimeDb || !currentViewUser) {
 				return;
 			}
+			cloudSnapshotReady = false;
 			if (cloudRef && cloudHandler) {
 				cloudRef.off("value", cloudHandler);
 			}
@@ -3170,33 +3317,37 @@
 			cloudHandler = function (snapshot) {
 				const data = snapshot.val();
 				if (!data) {
-					cloudRef.set({
-						records: records,
-						expiredRecords: expiredRecords,
-						channelSelections: getChannelSelectionState(currentViewUser),
-						channelSelectionPeriods: getChannelSelectionPeriodState(currentViewUser),
-						hiddenChannelItems: getHiddenChannelItemState(currentViewUser),
-						updatedAt: Date.now()
-					});
+					records = [];
+					expiredRecords = [];
+					cloudSnapshotReady = true;
+					refreshCurrentRecords();
+					persistLocal();
+					renderAllChannelSlots();
+					applyChannelVisibility();
+					renderRecords();
+					updateStats();
 					return;
 				}
-				const cleanedRecords = getCleanArray(data.records);
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
 				const dedupedExpiredRecords = dedupeExpiredRecordsList(cleanedExpiredRecords.items);
-				records = cleanedRecords.items;
 				expiredRecords = dedupedExpiredRecords.items;
 				channelSelections[currentViewUser] = sanitizeChannelStateMap(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {});
 				channelSelectionPeriods[currentViewUser] = sanitizeChannelStateMap(data.channelSelectionPeriods && typeof data.channelSelectionPeriods === "object" ? data.channelSelectionPeriods : {});
 				hiddenChannelItems[currentViewUser] = data.hiddenChannelItems && typeof data.hiddenChannelItems === "object" ? data.hiddenChannelItems : {};
+				let migratedLegacyRecords = false;
 				if (!hasAnyChannelSelections(channelSelections[currentViewUser])) {
-					const migratedState = buildChannelStateFromLegacyRecords(records);
+					const cleanedRecords = getCleanArray(data.records);
+					const migratedState = buildChannelStateFromLegacyRecords(cleanedRecords.items);
 					if (migratedState.changed) {
 						channelSelections[currentViewUser] = migratedState.selections;
 						channelSelectionPeriods[currentViewUser] = migratedState.periods;
+						migratedLegacyRecords = true;
 					}
 				}
+				refreshCurrentRecords();
+				cloudSnapshotReady = true;
 				persistLocal();
-				if (cleanedRecords.changed || cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || !hasAnyChannelSelections(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {})) {
+				if (cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || migratedLegacyRecords || Object.prototype.hasOwnProperty.call(data, "records")) {
 					syncCloudData();
 				}
 				renderAllChannelSlots();
@@ -3208,6 +3359,7 @@
 				console.error("Firebase 同步監聽失敗", error);
 				hint.textContent = "Firebase 即時同步失敗，已切換為本機模式。";
 				cloudSyncReady = false;
+				cloudSnapshotReady = false;
 			});
 		}
 
@@ -3222,6 +3374,7 @@
 				realtimeDb = firebase.database();
 				cloudSyncReady = true;
 				subscribeCloudData();
+				initializeDailyBackupScheduler();
 				hint.textContent = "已啟用 Firebase Realtime Database 即時同步（多人共用）。";
 			} catch (error) {
 				console.error("Firebase 初始化失敗", error);
@@ -3231,11 +3384,11 @@
 		}
 
 		function syncCloudData() {
-			if (!cloudSyncReady || !realtimeDb || !currentViewUser) {
+			if (!cloudSyncReady || !cloudSnapshotReady || !realtimeDb || !currentViewUser) {
 				return;
 			}
-			realtimeDb.ref(cloudRootPath + "/" + currentViewUser).set({
-				records: records,
+			realtimeDb.ref(cloudRootPath + "/" + currentViewUser).update({
+				records: null,
 				expiredRecords: expiredRecords,
 				channelSelections: sanitizeChannelStateMap(getChannelSelectionState(currentViewUser)),
 				channelSelectionPeriods: sanitizeChannelStateMap(getChannelSelectionPeriodState(currentViewUser)),
@@ -3246,14 +3399,224 @@
 			});
 		}
 
-		function saveRecords() {
+		function saveExpiredRecords() {
 			persistLocal();
 			syncCloudData();
 		}
 
-		function saveExpiredRecords() {
-			persistLocal();
-			syncCloudData();
+		function loadDailyBackupRunState() {
+			const raw = localStorage.getItem(dailyBackupScheduleStorageKey);
+			if (!raw) {
+				return {};
+			}
+			try {
+				const parsed = JSON.parse(raw);
+				return parsed && typeof parsed === "object" ? parsed : {};
+			} catch (error) {
+				return {};
+			}
+		}
+
+		function saveDailyBackupRunState(state) {
+			localStorage.setItem(dailyBackupScheduleStorageKey, JSON.stringify(state || {}));
+		}
+
+		function cloneDailyBackupRecord(record, user, source) {
+			const cloned = Object.assign({}, record);
+			cloned.channel = getArchivedChannelName(cloned.channel);
+			if (source === "current") {
+				ensurePeriodData(cloned);
+			} else if (cloned.status !== "已消費" && !isExpiredStatus(cloned.status)) {
+				ensurePeriodData(cloned);
+			}
+			recalculateRecordTotals(cloned);
+			if (typeof cloned.spendingTotal !== "number" || Number.isNaN(cloned.spendingTotal)) {
+				cloned.spendingTotal = normalizeNumber(cloned.voucherTotal) * 3;
+			}
+			return {
+				user: user,
+				createdBy: cloned.createdBy || user,
+				phaseLabel: cloned.phaseLabel || "-",
+				phaseStartDate: cloned.phaseStartDate || "-",
+				channel: cloned.channel || "-",
+				createdDate: cloned.createdDate || "-",
+				voucher1: normalizeNumber(cloned.voucher1),
+				voucher2: normalizeNumber(cloned.voucher2),
+				voucher3: normalizeNumber(cloned.voucher3),
+				voucherTotal: normalizeNumber(cloned.voucherTotal),
+				spendingTotal: normalizeNumber(cloned.spendingTotal),
+				expiryDate: cloned.expiryDate || "-",
+				status: cloned.status || "-",
+				source: source
+			};
+		}
+
+		function getDailyBackupComparableSignature(record) {
+			if (!record) {
+				return "";
+			}
+			return [
+				record.user || "-",
+				record.createdBy || "-",
+				record.phaseLabel || "-",
+				record.phaseStartDate || "-",
+				record.expiryDate || "-",
+				record.createdDate || "-",
+				record.channel || "-",
+				normalizeNumber(record.voucher1),
+				normalizeNumber(record.voucher2),
+				normalizeNumber(record.voucher3),
+				normalizeNumber(record.voucherTotal),
+				normalizeNumber(record.spendingTotal)
+			].join("|");
+		}
+
+		function buildDailyUserBackupSnapshot(user, cloudData) {
+			const sourceData = cloudData && typeof cloudData === "object" ? cloudData : {};
+			const currentItems = buildCurrentRecordsFromState(
+				user,
+				sourceData.channelSelections && typeof sourceData.channelSelections === "object" ? sourceData.channelSelections : {},
+				sourceData.channelSelectionPeriods && typeof sourceData.channelSelectionPeriods === "object" ? sourceData.channelSelectionPeriods : {}
+			).map(function (record) {
+				return cloneDailyBackupRecord(record, user, "current");
+			});
+			const archivedItems = dedupeExpiredRecordsList(getCleanArray(sourceData.expiredRecords).items).items.map(function (record) {
+				return cloneDailyBackupRecord(record, user, "archived");
+			});
+			const combinedMap = {};
+			currentItems.concat(archivedItems).forEach(function (record) {
+				const signature = getDailyBackupComparableSignature(record);
+				if (!signature) {
+					return;
+				}
+				if (!combinedMap[signature] || combinedMap[signature].source === "current") {
+					combinedMap[signature] = record;
+				}
+			});
+			const combinedItems = Object.keys(combinedMap).map(function (signature) {
+				return combinedMap[signature];
+			});
+			return {
+				currentRecords: currentItems,
+				archivedRecords: archivedItems,
+				combinedRecords: combinedItems,
+				combinedSignatures: combinedItems.map(getDailyBackupComparableSignature)
+			};
+		}
+
+		function buildDailyBackupSnapshot(sharedData, snapshotDate) {
+			const users = {};
+			let currentCount = 0;
+			let archivedCount = 0;
+			let combinedCount = 0;
+			Object.keys(sharedData || {}).forEach(function (user) {
+				const userSnapshot = buildDailyUserBackupSnapshot(user, sharedData[user]);
+				if (!userSnapshot.currentRecords.length && !userSnapshot.archivedRecords.length) {
+					return;
+				}
+				users[user] = userSnapshot;
+				currentCount += userSnapshot.currentRecords.length;
+				archivedCount += userSnapshot.archivedRecords.length;
+				combinedCount += userSnapshot.combinedRecords.length;
+			});
+			return {
+				snapshotDate: snapshotDate,
+				savedAt: Date.now(),
+				users: users,
+				summary: {
+					userCount: Object.keys(users).length,
+					currentCount: currentCount,
+					archivedCount: archivedCount,
+					combinedCount: combinedCount
+				}
+			};
+		}
+
+		function findMissingDailyBackupRecords(previousSnapshot, nextSnapshot) {
+			if (!previousSnapshot || !previousSnapshot.users) {
+				return [];
+			}
+			const missing = [];
+			Object.keys(previousSnapshot.users).forEach(function (user) {
+				const previousUserSnapshot = previousSnapshot.users[user] || {};
+				const nextUserSnapshot = nextSnapshot && nextSnapshot.users ? nextSnapshot.users[user] || {} : {};
+				const nextSignatureSet = new Set(Array.isArray(nextUserSnapshot.combinedSignatures) ? nextUserSnapshot.combinedSignatures : []);
+				(previousUserSnapshot.combinedRecords || []).forEach(function (record) {
+					const signature = getDailyBackupComparableSignature(record);
+					if (signature && !nextSignatureSet.has(signature)) {
+						missing.push(record);
+					}
+				});
+			});
+			return missing;
+		}
+
+		async function runDailyBackupSnapshot(reason) {
+			if (runDailyBackupSnapshot.inFlight || !cloudSyncReady || !realtimeDb) {
+				return;
+			}
+			runDailyBackupSnapshot.inFlight = true;
+			const now = new Date();
+			const todayKey = formatDate(now);
+			const runState = loadDailyBackupRunState();
+			if (runState.checkedDate === todayKey && reason !== "bootstrap") {
+				runDailyBackupSnapshot.inFlight = false;
+				return;
+			}
+			try {
+				const sharedSnapshot = await realtimeDb.ref(cloudRootPath).get();
+				const nextSnapshot = buildDailyBackupSnapshot(sharedSnapshot.val() || {}, todayKey);
+				const backupRef = realtimeDb.ref(cloudDailyBackupRootPath);
+				const backupPayload = (await backupRef.get()).val() || {};
+				const previousSnapshot = backupPayload.current && typeof backupPayload.current === "object" ? backupPayload.current : null;
+				const missingRecords = findMissingDailyBackupRecords(previousSnapshot, nextSnapshot);
+				const lastCheck = {
+					checkedAt: Date.now(),
+					checkedDate: todayKey,
+					reason: reason || "scheduled",
+					missingCount: missingRecords.length,
+					missingRecords: missingRecords
+				};
+				if (!previousSnapshot || missingRecords.length === 0) {
+					await backupRef.set({
+						current: nextSnapshot,
+						lastCheck: lastCheck
+					});
+				} else {
+					await backupRef.child("lastCheck").set(lastCheck);
+					console.warn("每日備份比對發現疑似遺失資料，已保留前一天備份。", missingRecords);
+				}
+				saveDailyBackupRunState({
+					checkedDate: todayKey,
+					checkedAt: lastCheck.checkedAt,
+					missingCount: missingRecords.length
+				});
+			} catch (error) {
+				console.error("每日備份執行失敗", error);
+			} finally {
+				runDailyBackupSnapshot.inFlight = false;
+			}
+		}
+
+		function scheduleNextDailyBackup() {
+			if (scheduleNextDailyBackup.timerId) {
+				window.clearTimeout(scheduleNextDailyBackup.timerId);
+			}
+			const now = new Date();
+			const nextRun = new Date(now);
+			nextRun.setHours(23, 59, 59, 0);
+			if (nextRun.getTime() <= now.getTime()) {
+				nextRun.setDate(nextRun.getDate() + 1);
+			}
+			scheduleNextDailyBackup.timerId = window.setTimeout(function () {
+				runDailyBackupSnapshot("scheduled");
+				scheduleNextDailyBackup();
+			}, nextRun.getTime() - now.getTime());
+		}
+
+		function initializeDailyBackupScheduler() {
+			runDailyBackupSnapshot("startup");
+			scheduleNextDailyBackup();
 		}
 
 		function saveChannelState() {
@@ -3268,6 +3631,7 @@
 		}
 
 		function calculateSummaryFromRecords() {
+			refreshCurrentRecords();
 			let voucherSum = 0;
 			let spendingSum = 0;
 			records.forEach(function (record) {
@@ -3895,26 +4259,6 @@
 			expiredRecords = dedupeExpiredRecordsList([archivedRecord].concat(expiredRecords)).items;
 		}
 
-		function moveExpiredRecordsToArchive() {
-			if (records.length === 0) {
-				return;
-			}
-			let archived = false;
-			records.forEach(function (record) {
-				ensurePeriodData(record);
-				if (isExpiredStatus(record.status)) {
-					if (!hasArchivedRecord(record)) {
-						archiveRecord(record, record.status);
-						archived = true;
-					}
-				}
-			});
-			if (!archived) {
-				return;
-			}
-			saveExpiredRecords();
-		}
-
 		function renderExpiredRecords() {
 			expiredRecords.forEach(function (record) {
 				recalculateRecordTotals(record);
@@ -3942,7 +4286,9 @@
 		}
 
 		function renderRecords() {
-			moveExpiredRecordsToArchive();
+			refreshCurrentRecords();
+			moveExpiredChannelSelectionsToArchive();
+			refreshCurrentRecords();
 			listOwner.textContent = currentViewUser;
 			currentViewTag.textContent = "目前檢視：" + currentViewUser;
 			accountButtons.forEach(function (btn) {
@@ -4003,9 +4349,10 @@
 
 		function switchViewUser(user) {
 			currentViewUser = user;
-			records = loadRecords(user);
+			records = [];
 			expiredRecords = loadExpiredRecords(user);
 			loadChannelState(user);
+			refreshCurrentRecords();
 			subscribeCloudData();
 			renderAllChannelSlots();
 			applyChannelVisibility();
@@ -4342,11 +4689,11 @@
 				hint.textContent = "請先選擇支付渠道。";
 				return;
 			}
-			if (records.some(function (record) { return record.channel === selectedChannel; })) {
+			if (getChannelSelectionList(selectedChannel).length > 0) {
 				hint.textContent = "此支付渠道已存在，不能重覆新增。";
 				return;
 			}
-			if (records.length >= maxRecords) {
+			if (refreshCurrentRecords().length >= maxRecords) {
 				hint.textContent = "記錄列表最多只能有 8 筆數據。";
 				return;
 			}
@@ -4360,23 +4707,18 @@
 			const voucher2 = getSelectedValue(voucherCards[1]);
 			const voucher3 = getSelectedValue(voucherCards[2]);
 			const voucherTotal = voucher1 + voucher2 + voucher3;
-			const spendingTotal = voucherTotal * 3;
-			records.unshift({
-				id: Date.now(),
-				createdBy: currentUser.name,
+			channelSelections[currentViewUser][selectedChannel] = [voucher1, voucher2, voucher3].map(function (value) {
+				return {
+					value: value,
+					used: false
+				};
+			});
+			channelSelectionPeriods[currentViewUser][selectedChannel] = {
 				phaseLabel: phaseLabel,
 				phaseStartDate: phaseStartDate,
-				channel: selectedChannel,
-				createdDate: createdDate,
-				voucher1: voucher1,
-				voucher2: voucher2,
-				voucher3: voucher3,
-				voucherTotal: voucherTotal,
-				spendingTotal: spendingTotal,
-				expiryDate: expiryDate,
-				status: getStatus(phaseStartDate, expiryDate)
-			});
-			saveRecords();
+				expiryDate: expiryDate
+			};
+			saveChannelState();
 			renderRecords();
 			hint.textContent = "已記錄完成：" + selectedChannel + "，消費券總額 " + voucherTotal;
 			voucherPanel.classList.remove("show");
@@ -4399,9 +4741,9 @@
 				return;
 			}
 			if (target.classList.contains("edit-voucher-btn")) {
-				const id = Number(target.getAttribute("data-id"));
+				const id = target.getAttribute("data-id") || "";
 				const field = target.getAttribute("data-field") || "";
-				const record = records.find(function (item) { return item.id === id; });
+				const record = refreshCurrentRecords().find(function (item) { return String(item.id) === id; });
 				if (!record || !field) {
 					return;
 				}
@@ -4412,19 +4754,19 @@
 				return;
 			}
 			if (target.classList.contains("consume-btn")) {
-				const consumeId = Number(target.getAttribute("data-id"));
-				const consumeRecord = records.find(function (record) { return record.id === consumeId; });
+				const consumeId = target.getAttribute("data-id") || "";
+				const consumeRecord = refreshCurrentRecords().find(function (record) { return String(record.id) === consumeId; });
 				if (!consumeRecord) {
 					return;
 				}
-				records = records.filter(function (record) { return record.id !== consumeId; });
+				setAllChannelSlotsUsed(consumeRecord.channel, true);
 				archiveRecord(consumeRecord, "已消費");
-				saveRecords();
 				saveExpiredRecords();
+				refreshCurrentRecords();
 				renderRecords();
 				updateStats();
 				hint.textContent = consumeRecord.channel + " 已標記為已消費。";
-				if (editingRecordId === consumeId) {
+				if (String(editingRecordId) === consumeId) {
 					closeEditChooser();
 				}
 				return;
@@ -4432,12 +4774,15 @@
 			if (!target.classList.contains("delete-btn")) {
 				return;
 			}
-			const id = Number(target.getAttribute("data-id"));
-			records = records.filter(function (record) { return record.id !== id; });
-			saveRecords();
+			const id = target.getAttribute("data-id") || "";
+			const record = refreshCurrentRecords().find(function (item) { return String(item.id) === id; });
+			if (!record) {
+				return;
+			}
+			resetChannelSlots(record.channel);
 			renderRecords();
 			updateStats();
-			if (editingRecordId === id) {
+			if (String(editingRecordId) === id) {
 				closeEditChooser();
 			}
 		});
@@ -4565,14 +4910,23 @@
 			if (!editingRecordId || !editingField || !canEditCurrentView()) {
 				return;
 			}
-			const record = records.find(function (item) { return item.id === editingRecordId; });
+			const record = refreshCurrentRecords().find(function (item) { return String(item.id) === String(editingRecordId); });
 			if (!record) {
 				closeEditChooser();
 				return;
 			}
-			record[editingField] = editingValue;
-			recalculateRecordTotals(record);
-			saveRecords();
+			const fieldSlotIndexMap = {
+				voucher1: 0,
+				voucher2: 1,
+				voucher3: 2
+			};
+			const slotIndex = fieldSlotIndexMap[editingField];
+			if (typeof slotIndex !== "number") {
+				closeEditChooser();
+				return;
+			}
+			setChannelSlotValue(record.channel, slotIndex, editingValue);
+			refreshCurrentRecords();
 			renderRecords();
 			updateStats();
 			hint.textContent = record.channel + " 的 " + getVoucherLabel(editingField) + " 已修改為 " + editingValue;
