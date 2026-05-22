@@ -1521,7 +1521,6 @@
 			<div class="title-block">
 				<div class="member-switcher-wrap">
 					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
-						<button class="member-pill" type="button" data-user="Admin">Admin</button>
 						<button class="member-pill" type="button" data-user="樂">樂</button>
 						<button class="member-pill" type="button" data-user="珊">珊</button>
 						<button class="member-pill" type="button" data-user="旭">旭</button>
@@ -4041,7 +4040,9 @@
 				currentUserTag.textContent = "目前登入：" + currentUser.name;
 				logoutBtn.classList.add("show");
 				loginOverlay.style.display = "none";
-				if (accountButtons.some(function (btn) { return btn.getAttribute("data-user") === currentUser.name; })) {
+				if (isAdminUser(currentUser)) {
+					renderRecords();
+				} else if (accountButtons.some(function (btn) { return btn.getAttribute("data-user") === currentUser.name; })) {
 					switchViewUser(currentUser.name);
 				}
 				hint.textContent = canEditCurrentView() ? "已登入：" + currentUser.name + "，可開始新增或修改資料。" : "已登入：" + currentUser.name + "，目前正查看其他帳號記錄。";
