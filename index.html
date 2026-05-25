@@ -520,6 +520,57 @@
 			font-size: 0.92rem;
 		}
 
+		.reminder-push-group {
+			margin-top: 18px;
+			padding: 16px;
+			border: 1px solid #d9e9f7;
+			border-radius: 18px;
+			background: rgba(255, 255, 255, 0.9);
+		}
+
+		.reminder-push-status {
+			margin: 10px 0 0;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #eef6ff;
+			color: #1f537d;
+			font-size: 0.9rem;
+			line-height: 1.5;
+		}
+
+		.reminder-push-actions {
+			display: flex;
+			gap: 10px;
+			margin-top: 12px;
+			flex-wrap: wrap;
+		}
+
+		.reminder-push-btn {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 16px;
+			font-size: 0.9rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.reminder-push-btn.primary {
+			background: linear-gradient(135deg, #1d6fd8 0%, #3689ef 100%);
+			color: #ffffff;
+		}
+
+		.reminder-push-btn.secondary {
+			background: #eaf1f8;
+			color: #234661;
+		}
+
+		.reminder-push-note {
+			margin: 10px 0 0;
+			color: #5d7489;
+			font-size: 0.84rem;
+			line-height: 1.5;
+		}
+
 		.reminder-dialog-actions {
 			display: flex;
 			justify-content: flex-end;
@@ -1621,6 +1672,15 @@
 				<h3 class="reminder-section-title">目前提醒內容預覽</h3>
 				<ul id="reminderPreviewList" class="reminder-preview-list"></ul>
 				<p id="reminderPreviewEmpty" class="reminder-preview-empty" hidden>目前沒有可預覽的到期提醒內容。</p>
+				<div class="reminder-push-group">
+					<div class="reminder-switch-label">PWA 推播狀態</div>
+					<p id="pushStatus" class="reminder-push-status">正在檢查這部裝置是否支援 Web Push。</p>
+					<div class="reminder-push-actions">
+						<button id="enablePushBtn" class="reminder-push-btn primary" type="button">啟用推播</button>
+						<button id="testPushBtn" class="reminder-push-btn secondary" type="button">測試通知</button>
+					</div>
+					<p class="reminder-push-note">測試通知只驗證主畫面 PWA 與 Service Worker 通知流程；真正背景推播仍需要後端與 VAPID 金鑰。</p>
+				</div>
 				<div class="reminder-dialog-actions">
 					<button id="reminderDialogClose" class="reminder-dialog-close" type="button">關閉</button>
 				</div>
@@ -2036,6 +2096,14 @@
 		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
 		const hiddenChannelStorageKeyPrefix = "voucherHiddenChannelsV1_";
 		const reminderStorageKeyPrefix = "voucherReminderV1_";
+		const webPushRuntimeConfig = {
+			apiBaseUrl: "https://coupon-cagv.onrender.com",
+			functionBaseUrl: "",
+			vapidPublicKeyOverride: ""
+		};
+		const webPushFunctionBaseUrl = webPushRuntimeConfig.apiBaseUrl || webPushRuntimeConfig.functionBaseUrl;
+		let webPushPublicKey = webPushRuntimeConfig.vapidPublicKeyOverride || "";
+		let webPushConfigReady = false;
 		const loginSessionStorageKey = "voucherLastLoginUserV1";
 		const maxRecords = 8;
 		const autoLoginPassword = "123456";
@@ -2092,6 +2160,9 @@
 		const reminderPreviewList = document.getElementById("reminderPreviewList");
 		const reminderPreviewEmpty = document.getElementById("reminderPreviewEmpty");
 		const reminderDialogClose = document.getElementById("reminderDialogClose");
+		const pushStatus = document.getElementById("pushStatus");
+		const enablePushBtn = document.getElementById("enablePushBtn");
+		const testPushBtn = document.getElementById("testPushBtn");
 		const reminderEnabledToggle = document.getElementById("reminderEnabledToggle");
 		const reminderLotteryToggle = document.getElementById("reminderLotteryToggle");
 		const reminderSpendingToggle = document.getElementById("reminderSpendingToggle");
@@ -2211,6 +2282,28 @@
 			};
 		}
 
+		function createDefaultPushState() {
+			return {
+				enabled: false,
+				subscribedAt: "",
+				endpoint: "",
+				permission: typeof Notification === "undefined" ? "unsupported" : Notification.permission,
+				lastError: ""
+			};
+		}
+
+		function normalizePushState(pushState) {
+			const defaults = createDefaultPushState();
+			const source = pushState && typeof pushState === "object" ? pushState : {};
+			return {
+				enabled: Boolean(source.enabled),
+				subscribedAt: typeof source.subscribedAt === "string" ? source.subscribedAt : defaults.subscribedAt,
+				endpoint: typeof source.endpoint === "string" ? source.endpoint : defaults.endpoint,
+				permission: typeof source.permission === "string" ? source.permission : defaults.permission,
+				lastError: typeof source.lastError === "string" ? source.lastError : defaults.lastError
+			};
+		}
+
 		function normalizeReminderFlagMap(flags) {
 			const source = flags && typeof flags === "object" ? flags : {};
 			const normalized = {};
@@ -2246,7 +2339,8 @@
 			if (!raw) {
 				return {
 					settings: defaults,
-					flags: {}
+					flags: {},
+					push: createDefaultPushState()
 				};
 			}
 			try {
@@ -2254,17 +2348,20 @@
 				if (parsed && typeof parsed === "object" && (parsed.settings || parsed.flags)) {
 					return {
 						settings: normalizeReminderSettings(parsed.settings),
-						flags: normalizeReminderFlagMap(parsed.flags)
+						flags: normalizeReminderFlagMap(parsed.flags),
+						push: normalizePushState(parsed.push)
 					};
 				}
 				return {
 					settings: defaults,
-					flags: normalizeReminderFlagMap(parsed)
+					flags: normalizeReminderFlagMap(parsed),
+					push: createDefaultPushState()
 				};
 			} catch (error) {
 				return {
 					settings: defaults,
-					flags: {}
+					flags: {},
+					push: createDefaultPushState()
 				};
 			}
 		}
@@ -2272,8 +2369,335 @@
 		function saveReminderState(user, state) {
 			localStorage.setItem(getReminderStorageKey(user), JSON.stringify({
 				settings: normalizeReminderSettings(state && state.settings),
-				flags: normalizeReminderFlagMap(state && state.flags)
+				flags: normalizeReminderFlagMap(state && state.flags),
+				push: normalizePushState(state && state.push)
 			}));
+		}
+
+		function updateReminderPushState(mutator) {
+			if (!currentViewUser) {
+				return;
+			}
+			const reminderState = loadReminderState(currentViewUser);
+			const nextPushState = normalizePushState(mutator(reminderState.push));
+			saveReminderState(currentViewUser, {
+				settings: reminderState.settings,
+				flags: reminderState.flags,
+				push: nextPushState
+			});
+			renderReminderDialog();
+		}
+
+		function isWebPushSupported() {
+			return typeof window !== "undefined"
+				&& window.isSecureContext
+				&& "serviceWorker" in navigator
+				&& "PushManager" in window
+				&& typeof Notification !== "undefined";
+		}
+
+		function isStandaloneNotificationContext() {
+			return isStandaloneApp();
+		}
+
+		function hasWebPushFunctionBaseUrl() {
+			return Boolean(webPushFunctionBaseUrl);
+		}
+
+		function getWebPushFunctionUrl(path) {
+			return webPushFunctionBaseUrl.replace(/\/$/, "") + path;
+		}
+
+		async function fetchWebPushJson(path, options) {
+			const response = await fetch(getWebPushFunctionUrl(path), Object.assign({
+				headers: {
+					"Content-Type": "application/json"
+				}
+			}, options || {}));
+			const payload = await response.json().catch(function () {
+				return {};
+			});
+			if (!response.ok || payload.ok === false) {
+				throw new Error(payload && payload.error ? payload.error : "web-push-function-error");
+			}
+			return payload;
+		}
+
+		async function ensureWebPushConfigLoaded() {
+			if (!hasWebPushFunctionBaseUrl()) {
+				webPushConfigReady = false;
+				return {
+					vapidPublicKey: "",
+					pushReady: false
+				};
+			}
+			if (webPushPublicKey) {
+				return {
+					vapidPublicKey: webPushPublicKey,
+					pushReady: webPushConfigReady
+				};
+			}
+			const payload = await fetchWebPushJson("/getWebPushConfig", {
+				method: "GET"
+			});
+			webPushPublicKey = typeof payload.vapidPublicKey === "string" ? payload.vapidPublicKey : "";
+			webPushConfigReady = Boolean(payload.pushReady);
+			return payload;
+		}
+
+		function urlBase64ToUint8Array(base64String) {
+			const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+			const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+			const rawData = window.atob(base64);
+			const outputArray = new Uint8Array(rawData.length);
+			for (let index = 0; index < rawData.length; index += 1) {
+				outputArray[index] = rawData.charCodeAt(index);
+			}
+			return outputArray;
+		}
+
+		function getPushStatusText(pushState) {
+			if (!isWebPushSupported()) {
+				return "這部裝置或目前瀏覽器不支援 Web Push。";
+			}
+			if (!isStandaloneNotificationContext()) {
+				return "請先用 Safari 把網站加入主畫面，再從主畫面開啟 APP 才能啟用 iOS Web Push。";
+			}
+			if (!hasWebPushFunctionBaseUrl()) {
+				return "推播後端 URL 尚未填入，前端目前只停在推播骨架狀態。";
+			}
+			if (!webPushPublicKey) {
+				return "前端骨架已就緒，但尚未填入 VAPID 公鑰，所以還不能正式訂閱背景推播。";
+			}
+			if (!webPushConfigReady) {
+				return "推播後端已連上，但伺服器端尚未配置 VAPID 金鑰，還不能發送真正背景推播。";
+			}
+			if (pushState.lastError) {
+				return "推播訂閱失敗：" + pushState.lastError;
+			}
+			if (pushState.enabled && pushState.endpoint) {
+				return "已建立推播訂閱。真正背景推播只差後端儲存 subscription 與發送測試訊息。";
+			}
+			if (pushState.permission === "granted") {
+				return "通知權限已開啟，但這部裝置尚未建立推播訂閱。";
+			}
+			if (pushState.permission === "denied") {
+				return "通知權限已被拒絕，請到 iPhone 設定重新打開通知權限。";
+			}
+			return "尚未啟用推播。請先允許通知，再建立主畫面 PWA 的 push 訂閱。";
+		}
+
+		async function getActiveServiceWorkerRegistration() {
+			if (!("serviceWorker" in navigator)) {
+				return null;
+			}
+			return navigator.serviceWorker.ready;
+		}
+
+		async function syncPushSubscriptionState() {
+			if (!currentViewUser) {
+				return createDefaultPushState();
+			}
+			const reminderState = loadReminderState(currentViewUser);
+			const nextPushState = normalizePushState(reminderState.push);
+			nextPushState.permission = typeof Notification === "undefined" ? "unsupported" : Notification.permission;
+			if (!isWebPushSupported()) {
+				nextPushState.enabled = false;
+				nextPushState.endpoint = "";
+				nextPushState.lastError = "";
+			} else {
+				const registration = await getActiveServiceWorkerRegistration();
+				const subscription = registration ? await registration.pushManager.getSubscription() : null;
+				nextPushState.enabled = Boolean(subscription);
+				nextPushState.endpoint = subscription && subscription.endpoint ? subscription.endpoint : "";
+				if (subscription && !nextPushState.subscribedAt) {
+					nextPushState.subscribedAt = new Date().toISOString();
+				}
+			}
+			saveReminderState(currentViewUser, {
+				settings: reminderState.settings,
+				flags: reminderState.flags,
+				push: nextPushState
+			});
+			return nextPushState;
+		}
+
+		async function renderPushStatus() {
+			if (!pushStatus) {
+				return;
+			}
+			if (hasWebPushFunctionBaseUrl()) {
+				try {
+					await ensureWebPushConfigLoaded();
+				} catch (error) {
+					updateReminderPushState(function (pushState) {
+						return Object.assign({}, pushState, {
+							lastError: error && error.message ? error.message : "載入推播設定失敗。"
+						});
+					});
+				}
+			}
+			const pushState = currentViewUser ? await syncPushSubscriptionState() : createDefaultPushState();
+			pushStatus.textContent = getPushStatusText(pushState);
+			if (enablePushBtn) {
+				enablePushBtn.disabled = !isWebPushSupported() || !isStandaloneNotificationContext();
+			}
+			if (testPushBtn) {
+				testPushBtn.disabled = !isWebPushSupported() || !isStandaloneNotificationContext() || pushState.permission === "denied";
+			}
+		}
+
+		async function subscribeToWebPush() {
+			if (!currentViewUser) {
+				hint.textContent = "請先登入，再啟用推播。";
+				return;
+			}
+			if (!isWebPushSupported()) {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						lastError: "裝置或瀏覽器不支援 Web Push。"
+					});
+				});
+				return;
+			}
+			if (!isStandaloneNotificationContext()) {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						lastError: "請先加入主畫面，再從主畫面版 APP 啟用推播。"
+					});
+				});
+				return;
+			}
+			const permission = await requestNotificationPermission();
+			if (permission !== "granted") {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						permission: permission,
+						lastError: permission === "denied" ? "通知權限已被拒絕。" : "通知權限尚未核准。"
+					});
+				});
+				return;
+			}
+			try {
+				await ensureWebPushConfigLoaded();
+			} catch (error) {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						permission: permission,
+						lastError: error && error.message ? error.message : "無法讀取推播設定。"
+					});
+				});
+				return;
+			}
+			if (!webPushPublicKey) {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						permission: permission,
+						lastError: "尚未取得 VAPID 公鑰，前端只能先完成推播骨架。"
+					});
+				});
+				return;
+			}
+			try {
+				const registration = await getActiveServiceWorkerRegistration();
+				if (!registration) {
+					throw new Error("Service Worker 尚未就緒");
+				}
+				let subscription = await registration.pushManager.getSubscription();
+				if (!subscription) {
+					subscription = await registration.pushManager.subscribe({
+						userVisibleOnly: true,
+						applicationServerKey: urlBase64ToUint8Array(webPushPublicKey)
+					});
+				}
+				await fetchWebPushJson("/subscribeWebPush", {
+					method: "POST",
+					body: JSON.stringify({
+						userId: currentViewUser,
+						subscription: subscription.toJSON(),
+						platform: isIosDevice() ? "ios-pwa" : "web-pwa",
+						userAgent: window.navigator.userAgent
+					})
+				});
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						enabled: true,
+						subscribedAt: pushState.subscribedAt || new Date().toISOString(),
+						endpoint: subscription.endpoint || "",
+						permission: permission,
+						lastError: ""
+					});
+				});
+					hint.textContent = "已建立推播訂閱，這部裝置已登記到推播後端。";
+			} catch (error) {
+				updateReminderPushState(function (pushState) {
+					return Object.assign({}, pushState, {
+						permission: permission,
+						lastError: error && error.message ? error.message : "建立推播訂閱失敗。"
+					});
+				});
+			}
+		}
+
+		async function triggerLocalPushTest() {
+			if (!currentViewUser) {
+				hint.textContent = "請先登入，再測試通知。";
+				return;
+			}
+			if (!isWebPushSupported()) {
+				hint.textContent = "這部裝置或目前瀏覽器不支援 Web Push / 通知測試。";
+				return;
+			}
+			if (!isStandaloneNotificationContext()) {
+				hint.textContent = "請先把網站加入主畫面，再從主畫面版 APP 測試通知。";
+				return;
+			}
+			const permission = await requestNotificationPermission();
+			if (permission !== "granted") {
+				hint.textContent = "通知權限未開啟，無法測試。";
+				await renderPushStatus();
+				return;
+			}
+			const registration = await getActiveServiceWorkerRegistration();
+			if (!registration || !registration.active) {
+				hint.textContent = "Service Worker 尚未就緒，請稍後再試一次。";
+				return;
+			}
+			if (hasWebPushFunctionBaseUrl()) {
+				try {
+					await ensureWebPushConfigLoaded();
+					if (webPushConfigReady) {
+						const payload = await fetchWebPushJson("/sendWebPushTest", {
+							method: "POST",
+							body: JSON.stringify({
+								userId: currentViewUser,
+								notification: {
+									title: "測試推播",
+									body: currentViewUser + " 的遠端 Web Push 已送出。",
+									tag: "remote-push-test",
+									url: "./?source=push-test"
+								}
+							})
+						});
+						hint.textContent = payload.ok ? "已透過推播後端送出測試推播。" : "測試推播已送出，但沒有任何裝置成功接收。";
+						await renderPushStatus();
+						return;
+					}
+				} catch (error) {
+					hint.textContent = "遠端測試推播失敗，已改用本機通知測試。";
+				}
+			}
+			registration.active.postMessage({
+				type: "SHOW_LOCAL_NOTIFICATION_TEST",
+				payload: {
+					title: "測試推播",
+					body: currentViewUser + " 的主畫面 PWA 通知骨架已接通。",
+					tag: "local-push-test",
+					url: "./?source=push-test"
+				}
+			});
+			hint.textContent = "已送出本機測試通知指令，請檢查這部裝置是否跳出通知。";
+			await renderPushStatus();
 		}
 
 		function updateReminderSettings(mutator) {
@@ -2387,6 +2811,7 @@
 			} else {
 				reminderPreviewEmpty.textContent = "目前沒有可預覽的到期提醒內容。";
 			}
+			renderPushStatus();
 		}
 
 		function openReminderDialog() {
@@ -4438,6 +4863,18 @@
 		if (reminderSettingsBtn) {
 			reminderSettingsBtn.addEventListener("click", function () {
 				openReminderDialog();
+			});
+		}
+
+		if (enablePushBtn) {
+			enablePushBtn.addEventListener("click", function () {
+				subscribeToWebPush();
+			});
+		}
+
+		if (testPushBtn) {
+			testPushBtn.addEventListener("click", function () {
+				triggerLocalPushTest();
 			});
 		}
 
