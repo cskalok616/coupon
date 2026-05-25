@@ -1623,19 +1623,19 @@
 			<div class="reminder-dialog-body">
 				<h2 class="reminder-title">設定提醒</h2>
 				<p class="reminder-copy">你可以在這裡控制提醒總開關、抽獎或消費券提醒類型，以及每次自動提醒的時間。</p>
+				<div class="reminder-push-group">
+					<div class="reminder-switch-label">PWA 推播狀態</div>
+					<p id="pushStatus" class="reminder-push-status">正在檢查這部裝置是否支援 Web Push。</p>
+					<div class="reminder-push-actions">
+						<button id="enablePushBtn" class="reminder-push-btn primary" type="button">啟用推播</button>
+						<button id="testPushBtn" class="reminder-push-btn secondary" type="button">測試通知</button>
+					</div>
+					<p class="reminder-push-note">測試通知只驗證主畫面 PWA 與 Service Worker 通知流程；真正背景推播仍需要後端與 VAPID 金鑰。</p>
+				</div>
 				<div class="reminder-settings-group">
 					<div class="reminder-switch-row">
 						<div class="reminder-switch-copy">
 							<div class="reminder-switch-label">啟用提醒</div>
-							<div class="reminder-switch-help">關閉後，這個帳號的所有自動提醒都會停止。</div>
-						</div>
-						<label class="ios-switch" for="reminderEnabledToggle">
-							<input id="reminderEnabledToggle" type="checkbox" />
-							<span class="ios-switch-slider"></span>
-						</label>
-					</div>
-					<div class="reminder-switch-list">
-						<div class="reminder-switch-item">
 							<div class="reminder-switch-copy">
 								<div class="reminder-switch-label">抽獎到期提醒</div>
 								<div class="reminder-switch-help">根據抽獎期結束日發出提醒。</div>
@@ -1672,15 +1672,6 @@
 				<h3 class="reminder-section-title">目前提醒內容預覽</h3>
 				<ul id="reminderPreviewList" class="reminder-preview-list"></ul>
 				<p id="reminderPreviewEmpty" class="reminder-preview-empty" hidden>目前沒有可預覽的到期提醒內容。</p>
-				<div class="reminder-push-group">
-					<div class="reminder-switch-label">PWA 推播狀態</div>
-					<p id="pushStatus" class="reminder-push-status">正在檢查這部裝置是否支援 Web Push。</p>
-					<div class="reminder-push-actions">
-						<button id="enablePushBtn" class="reminder-push-btn primary" type="button">啟用推播</button>
-						<button id="testPushBtn" class="reminder-push-btn secondary" type="button">測試通知</button>
-					</div>
-					<p class="reminder-push-note">測試通知只驗證主畫面 PWA 與 Service Worker 通知流程；真正背景推播仍需要後端與 VAPID 金鑰。</p>
-				</div>
 				<div class="reminder-dialog-actions">
 					<button id="reminderDialogClose" class="reminder-dialog-close" type="button">關閉</button>
 				</div>
