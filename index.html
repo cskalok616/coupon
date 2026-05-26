@@ -335,6 +335,7 @@
 
 		.reminder-dialog {
 			width: min(480px, calc(100vw - 32px));
+			max-height: calc(100dvh - 24px);
 			border: none;
 			border-radius: 28px;
 			padding: 0;
@@ -348,8 +349,12 @@
 		}
 
 		.reminder-dialog-body {
+			max-height: calc(100dvh - 24px);
 			padding: 20px 18px 18px;
 			background: #f2f2f7;
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			-webkit-overflow-scrolling: touch;
 		}
 
 		.reminder-title {
