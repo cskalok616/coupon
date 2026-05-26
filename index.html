@@ -4209,7 +4209,7 @@
 				return;
 			}
 			const dueMessages = [];
-			const pendingNotifications = [];
+			const pendingNotificationsBySlot = {};
 			const seenReminderKeys = {};
 			let flagsChanged = false;
 			const reminderConfigs = [
@@ -4241,35 +4241,49 @@
 							return;
 						}
 						const reminderMessageText = config.getMessageText(target);
-						const reminderFlagKey = target.key + ":" + config.key + ":" + deadlineDate + ":" + config.time;
+						const slotDate = formatDate(reminderTime);
+						const reminderFlagKey = config.key + ":" + slotDate + ":" + config.time;
 						const message = reminderMessageText + "（到期日 " + deadlineDate + "）";
-						if (!seenReminderKeys[reminderFlagKey]) {
-							seenReminderKeys[reminderFlagKey] = true;
+						const uniqueReminderKey = target.key + ":" + config.key + ":" + deadlineDate + ":" + config.time;
+						if (!seenReminderKeys[uniqueReminderKey]) {
+							seenReminderKeys[uniqueReminderKey] = true;
 							dueMessages.push(message);
 						}
-						if (reminderFlags[reminderFlagKey]) {
-							return;
+						if (!pendingNotificationsBySlot[reminderFlagKey]) {
+							pendingNotificationsBySlot[reminderFlagKey] = {
+								title: config.key === "same-day" ? "今日到期提醒" : "明日到期提醒",
+								messages: []
+							};
 						}
-						reminderFlags[reminderFlagKey] = Date.now();
-						flagsChanged = true;
-						pendingNotifications.push({
-							title: target.notificationTitle,
-							message: message,
-							tag: reminderFlagKey
-						});
+						pendingNotificationsBySlot[reminderFlagKey].messages.push(message);
 					});
 				});
 			});
 
 			showReminderMessages(dueMessages);
+			Object.keys(pendingNotificationsBySlot).forEach(function (slotKey) {
+				if (reminderFlags[slotKey]) {
+					delete pendingNotificationsBySlot[slotKey];
+					return;
+				}
+				reminderFlags[slotKey] = Date.now();
+				flagsChanged = true;
+			});
 			if (flagsChanged) {
 				saveReminderState(currentViewUser, {
 					settings: reminderSettings,
 					flags: reminderFlags
 				});
 			}
-			pendingNotifications.forEach(function (item) {
-				notifyReminder(item.title, item.message, item.tag);
+			Object.keys(pendingNotificationsBySlot).forEach(function (slotKey) {
+				const item = pendingNotificationsBySlot[slotKey];
+				const uniqueMessages = item.messages.filter(function (message, index, list) {
+					return list.indexOf(message) === index;
+				});
+				const summary = uniqueMessages.length === 1
+					? uniqueMessages[0]
+					: uniqueMessages.slice(0, 2).join("\n") + (uniqueMessages.length > 2 ? "\n另外還有 " + (uniqueMessages.length - 2) + " 項提醒" : "");
+				notifyReminder(item.title, summary, slotKey);
 			});
 		}
 
