@@ -4255,14 +4255,22 @@
 		}
 
 		async function checkAutoReminders() {
-			if (!currentUser || !currentViewUser) {
+			if (!currentUser || !currentUser.name) {
 				showReminderMessages([]);
 				return;
 			}
+			const reminderOwner = currentUser.name;
 			const now = new Date();
-			const reminderState = loadReminderState(currentViewUser);
+			const reminderState = loadReminderState(reminderOwner);
 			const reminderSettings = reminderState.settings;
 			const reminderFlags = reminderState.flags;
+			const reminderRecords = reminderOwner === currentViewUser
+				? records
+				: buildCurrentRecordsFromState(
+					reminderOwner,
+					getChannelSelectionState(reminderOwner),
+					getChannelSelectionPeriodState(reminderOwner)
+				);
 			if (!reminderSettings.enabled || (!reminderSettings.types.lottery && !reminderSettings.types.spending)) {
 				showReminderMessages([]);
 				return;
@@ -4279,7 +4287,7 @@
 				return reminderSettings.types[target.key];
 			});
 
-			records.forEach(function (record) {
+			reminderRecords.forEach(function (record) {
 				ensurePeriodData(record);
 				if (isExpiredStatus(record.status)) {
 					return;
@@ -4341,7 +4349,7 @@
 				}
 			}
 			if (flagsChanged) {
-				saveReminderState(currentViewUser, {
+				saveReminderState(reminderOwner, {
 					settings: reminderSettings,
 					flags: reminderFlags
 				});
