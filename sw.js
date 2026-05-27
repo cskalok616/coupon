@@ -112,7 +112,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("message", (event) => {
   const data = event.data && typeof event.data === "object" ? event.data : null;
-  if (!data || data.type !== "SHOW_LOCAL_NOTIFICATION_TEST") {
+  if (!data || (data.type !== "SHOW_LOCAL_NOTIFICATION_TEST" && data.type !== "SHOW_APP_NOTIFICATION")) {
     return;
   }
   event.waitUntil(showAppNotification(data.payload));

@@ -4220,17 +4220,41 @@
 			return reminderDate;
 		}
 
-		function notifyReminder(title, message, tag) {
+		async function notifyReminder(title, message, tag) {
 			if (typeof Notification === "undefined" || Notification.permission !== "granted") {
-				return;
+				return false;
 			}
-			new Notification(title, {
+			const payload = {
+				title: title,
 				body: message,
-				tag: tag
-			});
+				tag: tag,
+				url: "./?source=auto-reminder"
+			};
+			try {
+				const registration = await getActiveServiceWorkerRegistration();
+				if (registration && registration.active) {
+					registration.active.postMessage({
+						type: "SHOW_APP_NOTIFICATION",
+						payload: payload
+					});
+					return true;
+				}
+			} catch (error) {
+				console.warn("自動提醒無法透過 Service Worker 發送通知", error);
+			}
+			try {
+				new Notification(title, {
+					body: message,
+					tag: tag
+				});
+				return true;
+			} catch (error) {
+				console.warn("自動提醒無法直接建立通知", error);
+			}
+			return false;
 		}
 
-		function checkAutoReminders() {
+		async function checkAutoReminders() {
 			if (!currentUser || !currentViewUser) {
 				showReminderMessages([]);
 				return;
@@ -4301,16 +4325,8 @@
 					delete pendingNotificationsBySlot[slotKey];
 					return;
 				}
-				reminderFlags[slotKey] = Date.now();
-				flagsChanged = true;
 			});
-			if (flagsChanged) {
-				saveReminderState(currentViewUser, {
-					settings: reminderSettings,
-					flags: reminderFlags
-				});
-			}
-			Object.keys(pendingNotificationsBySlot).forEach(function (slotKey) {
+			for (const slotKey of Object.keys(pendingNotificationsBySlot)) {
 				const item = pendingNotificationsBySlot[slotKey];
 				const uniqueMessages = item.messages.filter(function (message, index, list) {
 					return list.indexOf(message) === index;
@@ -4318,8 +4334,18 @@
 				const summary = uniqueMessages.length === 1
 					? uniqueMessages[0]
 					: uniqueMessages.slice(0, 2).join("\n") + (uniqueMessages.length > 2 ? "\n另外還有 " + (uniqueMessages.length - 2) + " 項提醒" : "");
-				notifyReminder(item.title, summary, slotKey);
-			});
+				const notificationSent = await notifyReminder(item.title, summary, slotKey);
+				if (notificationSent) {
+					reminderFlags[slotKey] = Date.now();
+					flagsChanged = true;
+				}
+			}
+			if (flagsChanged) {
+				saveReminderState(currentViewUser, {
+					settings: reminderSettings,
+					flags: reminderFlags
+				});
+			}
 		}
 
 		function formatDate(date) {
