@@ -3858,13 +3858,13 @@
 				}
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
 				const dedupedExpiredRecords = dedupeExpiredRecordsList(cleanedExpiredRecords.items);
+				const cleanedRecords = getCleanArray(data.records);
 				expiredRecords = dedupedExpiredRecords.items;
 				channelSelections[currentViewUser] = sanitizeChannelStateMap(data.channelSelections && typeof data.channelSelections === "object" ? data.channelSelections : {});
 				channelSelectionPeriods[currentViewUser] = sanitizeChannelStateMap(data.channelSelectionPeriods && typeof data.channelSelectionPeriods === "object" ? data.channelSelectionPeriods : {});
 				hiddenChannelItems[currentViewUser] = data.hiddenChannelItems && typeof data.hiddenChannelItems === "object" ? data.hiddenChannelItems : {};
 				let migratedLegacyRecords = false;
 				if (!hasAnyChannelSelections(channelSelections[currentViewUser])) {
-					const cleanedRecords = getCleanArray(data.records);
 					const migratedState = buildChannelStateFromLegacyRecords(cleanedRecords.items);
 					if (migratedState.changed) {
 						channelSelections[currentViewUser] = migratedState.selections;
@@ -3875,7 +3875,7 @@
 				refreshCurrentRecords();
 				cloudSnapshotReady = true;
 				persistLocal();
-				if (cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || migratedLegacyRecords || Object.prototype.hasOwnProperty.call(data, "records")) {
+				if (cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || cleanedRecords.changed || migratedLegacyRecords) {
 					syncCloudData();
 				}
 				renderAllChannelSlots();
