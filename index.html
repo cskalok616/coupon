@@ -3848,12 +3848,10 @@
 					records = [];
 					expiredRecords = [];
 					cloudSnapshotReady = true;
-					refreshCurrentRecords();
 					persistLocal();
 					renderAllChannelSlots();
 					applyChannelVisibility();
 					renderRecords();
-					updateStats();
 					return;
 				}
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
@@ -3872,7 +3870,6 @@
 						migratedLegacyRecords = true;
 					}
 				}
-				refreshCurrentRecords();
 				cloudSnapshotReady = true;
 				persistLocal();
 				if (cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || cleanedRecords.changed || migratedLegacyRecords) {
@@ -3881,7 +3878,6 @@
 				renderAllChannelSlots();
 				applyChannelVisibility();
 				renderRecords();
-				updateStats();
 			};
 			cloudRef.on("value", cloudHandler, function (error) {
 				console.error("Firebase 同步監聽失敗", error);
@@ -4181,7 +4177,6 @@
 			}
 			finishBtn.disabled = !(selectedChannel && currentUser && canEditCurrentView());
 			readonlyNote.classList.toggle("show", Boolean(currentUser) && !canEditCurrentView());
-			verifySummaryConsistency();
 		}
 
 		function requestNotificationPermission() {
@@ -4862,7 +4857,6 @@
 		}
 
 		function renderRecords() {
-			refreshCurrentRecords();
 			moveExpiredChannelSelectionsToArchive();
 			refreshCurrentRecords();
 			listOwner.textContent = currentViewUser;
@@ -4877,7 +4871,6 @@
 				updateChannelOverviewStatus();
 				checkAutoReminders();
 				renderExpiredRecords();
-				verifySummaryConsistency();
 				updateStats();
 				return;
 			}
@@ -4902,7 +4895,6 @@
 			updateChannelOverviewStatus();
 			checkAutoReminders();
 			renderExpiredRecords();
-			verifySummaryConsistency();
 			updateStats();
 		}
 
@@ -4928,12 +4920,10 @@
 			records = [];
 			expiredRecords = loadExpiredRecords(user);
 			loadChannelState(user);
-			refreshCurrentRecords();
 			subscribeCloudData();
 			renderAllChannelSlots();
 			applyChannelVisibility();
 			renderRecords();
-			updateStats();
 		}
 
 		function closeMenu() {
@@ -4962,7 +4952,6 @@
 				}
 				hint.textContent = canEditCurrentView() ? "已登入：" + currentUser.name + "，可開始新增或修改資料。" : "已登入：" + currentUser.name + "，目前正查看其他帳號記錄。";
 				checkAutoReminders();
-				updateStats();
 				return;
 			}
 			currentUserTag.textContent = "未登入";
@@ -5350,9 +5339,7 @@
 				setAllChannelSlotsUsed(consumeRecord.channel, true);
 				archiveRecord(consumeRecord, "已消費");
 				saveExpiredRecords();
-				refreshCurrentRecords();
 				renderRecords();
-				updateStats();
 				hint.textContent = consumeRecord.channel + " 已標記為已消費。";
 				if (String(editingRecordId) === consumeId) {
 					closeEditChooser();
@@ -5369,7 +5356,6 @@
 			}
 			resetChannelSlots(record.channel);
 			renderRecords();
-			updateStats();
 			if (String(editingRecordId) === id) {
 				closeEditChooser();
 			}
@@ -5514,9 +5500,7 @@
 				return;
 			}
 			setChannelSlotValue(record.channel, slotIndex, editingValue);
-			refreshCurrentRecords();
 			renderRecords();
-			updateStats();
 			hint.textContent = record.channel + " 的 " + getVoucherLabel(editingField) + " 已修改為 " + editingValue;
 			closeEditChooser();
 		});
