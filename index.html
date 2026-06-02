@@ -3402,11 +3402,12 @@
 			channelItem.classList.toggle('all-used', allUsed);
 		}
 
-		function renderChannelSlots(channelName) {
+		function renderChannelSlots(channelName, options) {
 			const slotList = document.querySelector('.channel-slot-list[data-channel="' + channelName + '"]');
 			if (!slotList) {
 				return;
 			}
+			const shouldUpdateAllSummary = !(options && options.skipAllSummary);
 			const values = getChannelSelectionList(channelName);
 			slotList.innerHTML = values.map(function (entry, index) {
 				const slotEntry = normalizeChannelSlotEntry(entry);
@@ -3415,14 +3416,17 @@
 			}).join("") + (values.length < 3 ? getChannelAddButtonMarkup(channelName) : "");
 			updateChannelSummary(channelName);
 			updateChannelUsedState(channelName);
-			updateAllChannelSummary();
+			if (shouldUpdateAllSummary) {
+				updateAllChannelSummary();
+			}
 		}
 
 		function renderAllChannelSlots() {
 			moveExpiredChannelSelectionsToArchive();
 			channelNames.forEach(function (channelName) {
-				renderChannelSlots(channelName);
+				renderChannelSlots(channelName, { skipAllSummary: true });
 			});
+			updateAllChannelSummary();
 		}
 
 		function applyChannelAddSelection(channelName, value) {
