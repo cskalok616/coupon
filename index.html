@@ -3421,8 +3421,11 @@
 			}
 		}
 
-		function renderAllChannelSlots() {
-			moveExpiredChannelSelectionsToArchive();
+		function renderAllChannelSlots(options) {
+			const shouldSyncExpired = !(options && options.skipExpiredSync);
+			if (shouldSyncExpired) {
+				moveExpiredChannelSelectionsToArchive();
+			}
 			channelNames.forEach(function (channelName) {
 				renderChannelSlots(channelName, { skipAllSummary: true });
 			});
@@ -3853,9 +3856,7 @@
 					expiredRecords = [];
 					cloudSnapshotReady = true;
 					persistLocal();
-					renderAllChannelSlots();
-					applyChannelVisibility();
-					renderRecords();
+					renderCurrentView();
 					return;
 				}
 				const cleanedExpiredRecords = getCleanArray(data.expiredRecords);
@@ -3879,9 +3880,7 @@
 				if (cleanedExpiredRecords.changed || dedupedExpiredRecords.changed || cleanedRecords.changed || migratedLegacyRecords) {
 					syncCloudData();
 				}
-				renderAllChannelSlots();
-				applyChannelVisibility();
-				renderRecords();
+				renderCurrentView();
 			};
 			cloudRef.on("value", cloudHandler, function (error) {
 				console.error("Firebase 同步監聽失敗", error);
@@ -4860,8 +4859,11 @@
 			}).join("");
 		}
 
-		function renderRecords() {
-			moveExpiredChannelSelectionsToArchive();
+		function renderRecords(options) {
+			const shouldSyncExpired = !(options && options.skipExpiredSync);
+			if (shouldSyncExpired) {
+				moveExpiredChannelSelectionsToArchive();
+			}
 			refreshCurrentRecords();
 			listOwner.textContent = currentViewUser;
 			currentViewTag.textContent = "目前檢視：" + currentViewUser;
@@ -4902,6 +4904,13 @@
 			updateStats();
 		}
 
+		function renderCurrentView() {
+			moveExpiredChannelSelectionsToArchive();
+			renderAllChannelSlots({ skipExpiredSync: true });
+			applyChannelVisibility();
+			renderRecords({ skipExpiredSync: true });
+		}
+
 		function clearSelections() {
 			voucherCards.forEach(function (card) {
 				card.querySelectorAll(".value-btn").forEach(function (btn) {
@@ -4925,9 +4934,7 @@
 			expiredRecords = loadExpiredRecords(user);
 			loadChannelState(user);
 			subscribeCloudData();
-			renderAllChannelSlots();
-			applyChannelVisibility();
-			renderRecords();
+			renderCurrentView();
 		}
 
 		function closeMenu() {
