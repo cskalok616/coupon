@@ -2220,6 +2220,7 @@
 			{ username: "妍", password: "123456", name: "妍" }
 		];
 
+		// 每期抽獎起日同時是消費起日；endMonth/endDay 為消費最後一天。
 		const periodRules = [
 			{ label: "一", startMonth: 10, startDay: 9, endMonth: 10, endDay: 15 },
 			{ label: "二", startMonth: 10, startDay: 16, endMonth: 10, endDay: 22 },
@@ -4450,8 +4451,8 @@
 			return copy;
 		}
 
-		function getStatus(phaseStartDateStr, expiryDateStr) {
-			const now = new Date();
+		function getStatus(phaseStartDateStr, expiryDateStr, referenceDate = new Date()) {
+			const now = new Date(referenceDate);
 			const today = new Date(now);
 			today.setHours(0, 0, 0, 0);
 			const expiry = new Date(expiryDateStr + "T23:59:59");
@@ -4475,17 +4476,23 @@
 			lotteryEndDate.setHours(0, 0, 0, 0);
 			const lotteryEndTime = new Date(lotteryEndDate);
 			lotteryEndTime.setHours(23, 59, 59, 999);
+			const spendingStartDate = new Date(phaseStart);
+			spendingStartDate.setHours(0, 0, 0, 0);
 			const expiryDateOnly = new Date(expiry);
 			expiryDateOnly.setHours(0, 0, 0, 0);
 
+			if (today >= spendingStartDate && today < lotteryEndDate && today <= expiryDateOnly) {
+				const lotteryRemainingDays = Math.max(1, Math.ceil((lotteryEndDate.getTime() - today.getTime()) / msPerDay));
+				return "抽獎及消費中（剩餘 " + lotteryRemainingDays + " 天）";
+			}
+			if (today >= spendingStartDate && today.getTime() === lotteryEndDate.getTime() && today <= expiryDateOnly) {
+				const lotteryRemainingMs = lotteryEndTime.getTime() - now.getTime();
+				const lotteryRemainingHours = Math.max(1, Math.ceil(lotteryRemainingMs / (60 * 60 * 1000)));
+				return "抽獎及消費中（剩餘 " + lotteryRemainingHours + " 小時）";
+			}
 			if (today < lotteryEndDate) {
 				const lotteryRemainingDays = Math.max(1, Math.ceil((lotteryEndDate.getTime() - today.getTime()) / msPerDay));
 				return "抽獎中（剩餘 " + lotteryRemainingDays + " 天）";
-			}
-			if (today.getTime() === lotteryEndDate.getTime()) {
-				const lotteryRemainingMs = lotteryEndTime.getTime() - now.getTime();
-				const lotteryRemainingHours = Math.max(1, Math.ceil(lotteryRemainingMs / (60 * 60 * 1000)));
-				return "抽獎中（剩餘 " + lotteryRemainingHours + " 小時）";
 			}
 			if (today < expiryDateOnly) {
 				const spendingRemainingDays = Math.max(1, Math.ceil((expiryDateOnly.getTime() - today.getTime()) / msPerDay));
