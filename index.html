@@ -1655,7 +1655,7 @@
 		<div class="login-card">
 			<h2 class="login-title">喂，登入左先喇</h2>
 			<form id="loginForm" class="login-form">
-				<input id="loginUser" class="login-input" type="text" placeholder="帳號" autocomplete="username" required />
+				<input id="loginUser" class="login-input" type="text" placeholder="登入帳戶名稱，例如：珊" autocomplete="username" required />
 				<button class="login-submit" type="submit">登入</button>
 			</form>
 			<p id="loginError" class="login-error"></p>
@@ -1671,7 +1671,8 @@
 		<div class="topbar">
 			<div class="title-block">
 				<div class="member-switcher-wrap">
-					<div class="member-options" id="accountSwitcher" aria-label="登入帳號群">
+					<span class="switcher-label">點選姓名只切換檢視；新增或修改請先登出，再登入該帳戶。</span>
+					<div class="member-options" id="accountSwitcher" aria-label="切換檢視帳戶">
 						<button class="member-pill" type="button" data-user="樂">樂</button>
 						<button class="member-pill" type="button" data-user="珊">珊</button>
 						<button class="member-pill" type="button" data-user="旭">旭</button>
@@ -1845,7 +1846,7 @@
 			<h2 class="record-title">記錄列表</h2>
 			<p id="hint" class="hint">請先登入後再操作。</p>
 			<div id="reminderNote" class="reminder-note"></div>
-			<div id="readonlyNote" class="readonly-note">目前正在查看其他帳號的列表，你只能檢視，不能修改或刪除。</div>
+					<div id="readonlyNote" class="readonly-note">目前正在查看其他帳號的列表，你只能檢視，不能修改或刪除。</div>
 			<div class="record-meta">
 				<div class="meta-item">
 					<span class="meta-label">目前檢視帳號</span>
@@ -4216,7 +4217,11 @@
 				addBtn.disabled = !(currentUser && canEditCurrentView());
 			}
 			finishBtn.disabled = !(selectedChannel && currentUser && canEditCurrentView());
-			readonlyNote.classList.toggle("show", Boolean(currentUser) && !canEditCurrentView());
+			const isReadOnly = Boolean(currentUser) && !canEditCurrentView();
+			if (isReadOnly) {
+				readonlyNote.textContent = "目前以「" + currentUser.name + "」登入，正在檢視「" + currentViewUser + "」。此帳戶為唯讀；如要新增或修改，請按「登出」，再以「" + currentViewUser + "」登入。";
+			}
+			readonlyNote.classList.toggle("show", isReadOnly);
 		}
 
 		function requestNotificationPermission() {
@@ -5197,7 +5202,9 @@
 			btn.addEventListener("click", function () {
 				switchViewUser(btn.getAttribute("data-user"));
 				if (currentUser) {
-					hint.textContent = canEditCurrentView() ? "目前正在管理「" + currentViewUser + "」的記錄。" : "目前正在查看「" + currentViewUser + "」的記錄。";
+					hint.textContent = canEditCurrentView()
+						? "目前正在管理「" + currentViewUser + "」的記錄。"
+						: "目前以「" + currentUser.name + "」登入，只能檢視「" + currentViewUser + "」。要新增消費券，請登出後以「" + currentViewUser + "」登入。";
 				}
 			});
 		});
