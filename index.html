@@ -3545,7 +3545,6 @@
 
 		function moveExpiredChannelSelectionsToArchive() {
 			let archived = false;
-			let selectionChanged = false;
 			channelNames.forEach(function (channelName) {
 				const values = getChannelSelectionList(channelName);
 				if (!values.length) {
@@ -3553,7 +3552,9 @@
 					return;
 				}
 				const periodMeta = ensureChannelPeriodMeta(channelName);
-				if (!periodMeta || !isPastChannelExpiry(periodMeta.expiryDate)) {
+				if (!periodMeta || !periodMeta.expiryDate
+					|| periodMeta.expiryDate < expiredHistoryResetVersion
+					|| !isPastChannelExpiry(periodMeta.expiryDate)) {
 					return;
 				}
 				const archivedRecord = buildChannelArchiveRecord(channelName, "已過期", periodMeta);
@@ -3561,15 +3562,9 @@
 					archiveRecord(archivedRecord, "已過期");
 					archived = true;
 				}
-				values.length = 0;
-				clearChannelPeriodMeta(channelName);
-				selectionChanged = true;
 			});
 			if (archived) {
 				saveExpiredRecords();
-			}
-			if (selectionChanged) {
-				saveChannelState();
 			}
 		}
 
