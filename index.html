@@ -2189,6 +2189,8 @@
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
 		const expiredBackupStorageKeyPrefix = "voucherExpiredBackupsV1_";
+		const expiredHistoryResetVersion = "2026-10-08";
+		const expiredHistoryResetStorageKeyPrefix = "voucherExpiredHistoryResetV1_";
 		const dailyBackupScheduleStorageKey = "voucherDailyBackupScheduleV1";
 		const channelSelectionStorageKeyPrefix = "voucherChannelSelectionsV1_";
 		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
@@ -2217,16 +2219,16 @@
 		];
 
 		const periodRules = [
-			{ label: "一", startMonth: 4, startDay: 10, endMonth: 4, endDay: 16 },
-			{ label: "二", startMonth: 4, startDay: 17, endMonth: 4, endDay: 23 },
-			{ label: "三", startMonth: 4, startDay: 24, endMonth: 4, endDay: 30 },
-			{ label: "四", startMonth: 5, startDay: 1, endMonth: 5, endDay: 7 },
-			{ label: "五", startMonth: 5, startDay: 8, endMonth: 5, endDay: 14 },
-			{ label: "六", startMonth: 5, startDay: 15, endMonth: 5, endDay: 21 },
-			{ label: "七", startMonth: 5, startDay: 22, endMonth: 5, endDay: 28 },
-			{ label: "八", startMonth: 5, startDay: 29, endMonth: 6, endDay: 4 },
-			{ label: "九", startMonth: 6, startDay: 5, endMonth: 6, endDay: 11 },
-			{ label: "十", startMonth: 6, startDay: 12, endMonth: 6, endDay: 18 }
+			{ label: "一", startMonth: 10, startDay: 9, endMonth: 10, endDay: 15 },
+			{ label: "二", startMonth: 10, startDay: 16, endMonth: 10, endDay: 22 },
+			{ label: "三", startMonth: 10, startDay: 23, endMonth: 10, endDay: 29 },
+			{ label: "四", startMonth: 10, startDay: 30, endMonth: 11, endDay: 5 },
+			{ label: "五", startMonth: 11, startDay: 6, endMonth: 11, endDay: 12 },
+			{ label: "六", startMonth: 11, startDay: 13, endMonth: 11, endDay: 19 },
+			{ label: "七", startMonth: 11, startDay: 20, endMonth: 11, endDay: 26 },
+			{ label: "八", startMonth: 11, startDay: 27, endMonth: 12, endDay: 3 },
+			{ label: "九", startMonth: 12, startDay: 4, endMonth: 12, endDay: 10 },
+			{ label: "十", startMonth: 12, startDay: 11, endMonth: 12, endDay: 17 }
 		];
 
 		const loginOverlay = document.getElementById("loginOverlay");
@@ -3020,6 +3022,10 @@
 			return expiredBackupStorageKeyPrefix + user;
 		}
 
+		function getExpiredHistoryResetStorageKey(user) {
+			return expiredHistoryResetStorageKeyPrefix + user;
+		}
+
 		function getReminderStorageKey(user) {
 			return reminderStorageKeyPrefix + user;
 		}
@@ -3539,6 +3545,7 @@
 
 		function moveExpiredChannelSelectionsToArchive() {
 			let archived = false;
+			let selectionChanged = false;
 			channelNames.forEach(function (channelName) {
 				const values = getChannelSelectionList(channelName);
 				if (!values.length) {
@@ -3554,9 +3561,15 @@
 					archiveRecord(archivedRecord, "已過期");
 					archived = true;
 				}
+				values.length = 0;
+				clearChannelPeriodMeta(channelName);
+				selectionChanged = true;
 			});
 			if (archived) {
 				saveExpiredRecords();
+			}
+			if (selectionChanged) {
+				saveChannelState();
 			}
 		}
 
@@ -3710,6 +3723,12 @@
 		}
 
 		function loadExpiredRecords(user) {
+			const resetStorageKey = getExpiredHistoryResetStorageKey(user);
+			if (localStorage.getItem(resetStorageKey) !== expiredHistoryResetVersion) {
+				localStorage.setItem(getExpiredStorageKey(user), "[]");
+				localStorage.setItem(resetStorageKey, expiredHistoryResetVersion);
+				return [];
+			}
 			const raw = localStorage.getItem(getExpiredStorageKey(user));
 			if (!raw) {
 				return [];
@@ -3890,8 +3909,12 @@
 				}
 				realtimeDb = firebase.database();
 				cloudSyncReady = true;
-				subscribeCloudData();
-				initializeDailyBackupScheduler();
+				clearPreviousExpiredHistory().catch(function (error) {
+					console.error("清除舊封存記錄失敗", error);
+				}).finally(function () {
+					subscribeCloudData();
+					initializeDailyBackupScheduler();
+				});
 				hint.textContent = "已啟用 Firebase Realtime Database 即時同步（多人共用）。";
 			} catch (error) {
 				console.error("Firebase 初始化失敗", error);
@@ -3914,6 +3937,35 @@
 			}).catch(function (error) {
 				console.error("Firebase 寫入失敗", error);
 			});
+		}
+
+		function clearPreviousExpiredHistory() {
+			loginUsers.forEach(function (user) {
+				const resetStorageKey = getExpiredHistoryResetStorageKey(user.name);
+				if (localStorage.getItem(resetStorageKey) !== expiredHistoryResetVersion) {
+					localStorage.setItem(getExpiredStorageKey(user.name), "[]");
+					localStorage.setItem(resetStorageKey, expiredHistoryResetVersion);
+				}
+			});
+
+			if (!realtimeDb) {
+				return Promise.resolve();
+			}
+
+			return Promise.all(loginUsers.map(function (user) {
+				const userRef = realtimeDb.ref(cloudRootPath + "/" + user.name);
+				return userRef.get().then(function (snapshot) {
+					const data = snapshot.val();
+					if (data && data.expiredHistoryResetVersion === expiredHistoryResetVersion) {
+						return null;
+					}
+					return userRef.update({
+						expiredRecords: null,
+						expiredHistoryResetVersion: expiredHistoryResetVersion,
+						updatedAt: Date.now()
+					});
+				});
+			}));
 		}
 
 		function saveExpiredRecords() {
