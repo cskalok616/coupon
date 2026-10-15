@@ -1676,6 +1676,8 @@
 						<button class="member-pill" type="button" data-user="樂">樂</button>
 						<button class="member-pill" type="button" data-user="珊">珊</button>
 						<button class="member-pill" type="button" data-user="旭">旭</button>
+						<button class="member-pill" type="button" data-user="苑">苑</button>
+						<button class="member-pill" type="button" data-user="澤">澤</button>
 						<button class="member-pill" type="button" data-user="影">影</button>
 						<button class="member-pill" type="button" data-user="富">富</button>
 						<button class="member-pill" type="button" data-user="妍">妍</button>
@@ -2215,6 +2217,8 @@
 			{ username: "樂", password: "123456", name: "樂" },
 			{ username: "珊", password: "123456", name: "珊" },
 			{ username: "旭", password: "123456", name: "旭" },
+			{ username: "苑", password: "123456", name: "苑" },
+			{ username: "澤", password: "123456", name: "澤" },
 			{ username: "影", password: "123456", name: "影" },
 			{ username: "富", password: "123456", name: "富" },
 			{ username: "妍", password: "123456", name: "妍" }
@@ -2325,7 +2329,7 @@
 		let cloudRef = null;
 		let cloudHandler = null;
 		const delegatedEditors = {
-			"苑": ["澤"],
+			"苑": ["富", "妍", "玥", "澤"],
 			"瑩": ["婆"],
 			"富": ["影", "妍", "玥"],
 			"影": ["富", "妍", "玥"]
@@ -3006,6 +3010,7 @@
 			const allowedViews = delegatedEditors[currentUser.name] || [];
 			return currentUser.name === currentViewUser
 				|| currentUser.name === "妍"
+				|| currentUser.name === "澤"
 				|| allowedViews.includes(currentViewUser);
 		}
 
