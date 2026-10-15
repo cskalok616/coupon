@@ -2195,6 +2195,8 @@
 		const expiredBackupStorageKeyPrefix = "voucherExpiredBackupsV1_";
 		const expiredHistoryResetVersion = "2026-10-08";
 		const expiredHistoryResetStorageKeyPrefix = "voucherExpiredHistoryResetV1_";
+		// Keep this migration cohort separate from loginUsers so newly enabled accounts are not cleared.
+		const expiredHistoryResetUsers = ["Admin", "樂", "珊", "旭", "影", "富", "妍"];
 		const dailyBackupScheduleStorageKey = "voucherDailyBackupScheduleV1";
 		const channelSelectionStorageKeyPrefix = "voucherChannelSelectionsV1_";
 		const channelPeriodStorageKeyPrefix = "voucherChannelPeriodsV1_";
@@ -3943,10 +3945,10 @@
 		}
 
 		function clearPreviousExpiredHistory() {
-			loginUsers.forEach(function (user) {
-				const resetStorageKey = getExpiredHistoryResetStorageKey(user.name);
+			expiredHistoryResetUsers.forEach(function (userName) {
+				const resetStorageKey = getExpiredHistoryResetStorageKey(userName);
 				if (localStorage.getItem(resetStorageKey) !== expiredHistoryResetVersion) {
-					localStorage.setItem(getExpiredStorageKey(user.name), "[]");
+					localStorage.setItem(getExpiredStorageKey(userName), "[]");
 					localStorage.setItem(resetStorageKey, expiredHistoryResetVersion);
 				}
 			});
@@ -3955,8 +3957,8 @@
 				return Promise.resolve();
 			}
 
-			return Promise.all(loginUsers.map(function (user) {
-				const userRef = realtimeDb.ref(cloudRootPath + "/" + user.name);
+			return Promise.all(expiredHistoryResetUsers.map(function (userName) {
+				const userRef = realtimeDb.ref(cloudRootPath + "/" + userName);
 				return userRef.get().then(function (snapshot) {
 					const data = snapshot.val();
 					if (data && data.expiredHistoryResetVersion === expiredHistoryResetVersion) {
