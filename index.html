@@ -2190,11 +2190,13 @@
 		const cloudRootPath = "voucher_app/group_shared";
 		const cloudBackupRootPath = "voucher_app/group_shared_backups";
 		const cloudDailyBackupRootPath = "voucher_app/group_shared_daily_backup";
+		const cloudWeeklyResetPath = "voucher_app/group_shared_weekly_reset";
 		const storageKeyPrefix = "voucherRecordsV1_";
 		const expiredStorageKeyPrefix = "voucherExpiredRecordsV1_";
 		const expiredBackupStorageKeyPrefix = "voucherExpiredBackupsV1_";
 		const expiredHistoryResetVersion = "2026-10-08";
 		const expiredHistoryResetStorageKeyPrefix = "voucherExpiredHistoryResetV1_";
+		const weeklyResetStorageKey = "voucherFridayResetV1";
 		// Keep this migration cohort separate from loginUsers so newly enabled accounts are not cleared.
 		const expiredHistoryResetUsers = ["Admin", "樂", "珊", "旭", "影", "富", "妍"];
 		const dailyBackupScheduleStorageKey = "voucherDailyBackupScheduleV1";
@@ -3907,6 +3909,7 @@
 		function initCloudSync() {
 			try {
 				if (typeof firebase === "undefined") {
+					initializeFridayResetScheduler();
 					return;
 				}
 				if (!firebase.apps.length) {
@@ -3919,12 +3922,14 @@
 				}).finally(function () {
 					subscribeCloudData();
 					initializeDailyBackupScheduler();
+					initializeFridayResetScheduler();
 				});
 				hint.textContent = "已啟用 Firebase Realtime Database 即時同步（多人共用）。";
 			} catch (error) {
 				console.error("Firebase 初始化失敗", error);
 				hint.textContent = "Firebase 初始化失敗，已切換為本機模式。";
 				cloudSyncReady = false;
+				initializeFridayResetScheduler();
 			}
 		}
 
@@ -4192,6 +4197,171 @@
 			runDailyBackupSnapshot("startup");
 			scheduleNextDailyBackup();
 		}
+
+		function getLatestFridayResetKey(referenceDate) {
+			const now = new Date(referenceDate || new Date());
+			const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
+			const friday = new Date(now);
+			friday.setDate(friday.getDate() - daysSinceFriday);
+			friday.setHours(0, 0, 0, 0);
+			return formatDate(friday);
+		}
+
+		function getLastWeeklyResetMarker() {
+			try {
+				const raw = localStorage.getItem(weeklyResetStorageKey);
+				const parsed = raw ? JSON.parse(raw) : null;
+				return parsed && typeof parsed === "object" ? parsed : {};
+			} catch (error) {
+				return {};
+			}
+		}
+
+		function saveLastWeeklyResetMarker(marker) {
+			localStorage.setItem(weeklyResetStorageKey, JSON.stringify(marker || {}));
+		}
+
+		function buildWeeklyConsumedArchive(user, channelName, values, periodMeta, resetKey) {
+			const slots = (Array.isArray(values) ? values : []).slice(0, 3).map(normalizeChannelSlotEntry);
+			if (!slots.length) {
+				return null;
+			}
+			const voucher1 = slots[0] ? normalizeNumber(slots[0].value) : 0;
+			const voucher2 = slots[1] ? normalizeNumber(slots[1].value) : 0;
+			const voucher3 = slots[2] ? normalizeNumber(slots[2].value) : 0;
+			const voucherTotal = voucher1 + voucher2 + voucher3;
+			const meta = periodMeta && typeof periodMeta === "object" ? periodMeta : {};
+			return {
+				id: "friday-reset:" + resetKey + ":" + getArchivedChannelName(channelName),
+				createdBy: user,
+				phaseLabel: meta.phaseLabel || "-",
+				phaseStartDate: meta.phaseStartDate || "-",
+				channel: getArchivedChannelName(channelName),
+				createdDate: resetKey,
+				voucher1: voucher1,
+				voucher2: voucher2,
+				voucher3: voucher3,
+				voucherTotal: voucherTotal,
+				spendingTotal: voucherTotal * 3,
+				expiryDate: meta.expiryDate || "-",
+				status: "已消費"
+			};
+		}
+
+		async function runFridayReset(reason) {
+			const resetKey = getLatestFridayResetKey(new Date());
+			const marker = getLastWeeklyResetMarker();
+			if (!cloudSyncReady || !realtimeDb) {
+				if (marker.resetKey === resetKey && reason !== "retry") {
+					return false;
+				}
+				runLocalFridayReset(resetKey);
+				return true;
+			}
+
+			try {
+				const markerSnapshot = await realtimeDb.ref(cloudWeeklyResetPath).get();
+				const cloudMarker = markerSnapshot.val();
+				if (cloudMarker && cloudMarker.resetKey === resetKey && reason !== "retry") {
+					saveLastWeeklyResetMarker(cloudMarker);
+					return false;
+				}
+
+				const sharedSnapshot = await realtimeDb.ref(cloudRootPath).get();
+				const sharedData = sharedSnapshot.val() || {};
+				const users = {};
+				loginUsers.forEach(function (user) {
+					users[user.name] = true;
+				});
+				Object.keys(sharedData).forEach(function (user) {
+					users[user] = true;
+				});
+
+				const updates = {
+					[cloudWeeklyResetPath + "/resetKey"]: resetKey,
+					[cloudWeeklyResetPath + "/ranAt"]: Date.now(),
+					[cloudWeeklyResetPath + "/reason"]: reason || "scheduled"
+				};
+				Object.keys(users).forEach(function (user) {
+					const source = sharedData[user] && typeof sharedData[user] === "object" ? sharedData[user] : {};
+					const selections = sanitizeChannelStateMap(source.channelSelections && typeof source.channelSelections === "object" ? source.channelSelections : {});
+					const periods = sanitizeChannelStateMap(source.channelSelectionPeriods && typeof source.channelSelectionPeriods === "object" ? source.channelSelectionPeriods : {});
+					const archivedRecords = [];
+					Object.keys(selections).forEach(function (channelName) {
+						const archive = buildWeeklyConsumedArchive(user, channelName, selections[channelName], periods[channelName], resetKey);
+						if (archive) {
+							archivedRecords.push(archive);
+						}
+					});
+
+					const existingExpired = getCleanArray(source.expiredRecords).items;
+					const nextExpired = archivedRecords.length
+						? dedupeExpiredRecordsList(existingExpired.concat(archivedRecords)).items
+						: existingExpired;
+					updates[cloudRootPath + "/" + user + "/records"] = null;
+					updates[cloudRootPath + "/" + user + "/expiredRecords"] = nextExpired;
+					updates[cloudRootPath + "/" + user + "/channelSelections"] = {};
+					updates[cloudRootPath + "/" + user + "/channelSelectionPeriods"] = {};
+					updates[cloudRootPath + "/" + user + "/updatedAt"] = Date.now();
+				});
+
+				await realtimeDb.ref().update(updates);
+				saveLastWeeklyResetMarker({ resetKey: resetKey, ranAt: Date.now(), reason: reason || "scheduled" });
+				return true;
+			} catch (error) {
+				console.error("星期五自動結轉失敗", error);
+				return false;
+			}
+		}
+
+		function runLocalFridayReset(resetKey) {
+			const marker = getLastWeeklyResetMarker();
+			if (marker.resetKey === resetKey) {
+				return false;
+			}
+			loginUsers.forEach(function (user) {
+				const selections = getChannelSelectionState(user);
+				const periods = getChannelSelectionPeriodState(user);
+				let expired = loadExpiredRecords(user);
+				const archivedRecords = [];
+				Object.keys(selections).forEach(function (channelName) {
+					const archive = buildWeeklyConsumedArchive(user, channelName, selections[channelName], periods[channelName], resetKey);
+					if (archive) {
+						archivedRecords.push(archive);
+					}
+				});
+				if (archivedRecords.length) {
+					expired = dedupeExpiredRecordsList(expired.concat(archivedRecords)).items;
+					localStorage.setItem(getExpiredStorageKey(user), JSON.stringify(expired));
+				}
+				channelSelections[user] = {};
+				channelSelectionPeriods[user] = {};
+				localStorage.setItem(getChannelSelectionStorageKey(user), JSON.stringify({}));
+				localStorage.setItem(getChannelPeriodStorageKey(user), JSON.stringify({}));
+			});
+			saveLastWeeklyResetMarker({ resetKey: resetKey, ranAt: Date.now(), reason: "local-fallback" });
+			return true;
+		}
+
+		function scheduleNextFridayReset() {
+			if (scheduleNextFridayReset.timerId) {
+				window.clearTimeout(scheduleNextFridayReset.timerId);
+			}
+			const now = new Date();
+			const nextRun = new Date(now);
+			nextRun.setHours(0, 0, 0, 0);
+			const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+			nextRun.setDate(nextRun.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
+			scheduleNextFridayReset.timerId = window.setTimeout(function () {
+				runFridayReset("scheduled");
+				scheduleNextFridayReset();
+			}, nextRun.getTime() - now.getTime());
+		}
+
+		function initializeFridayResetScheduler() {
+			runFridayReset("startup");
+			scheduleNextFridayReset();
+	 }
 
 		function saveChannelState() {
 			persistLocal();
