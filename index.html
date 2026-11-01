@@ -1311,10 +1311,6 @@
 			flex: 0 0 55px;
 		}
 
-		.channel-value-box.thank-you {
-			font-size: 1rem;
-		}
-
 		.channel-value-box.used {
 			background: #eef1f4;
 			border-color: #d7dde4;
@@ -1807,7 +1803,7 @@
 				<div class="voucher-card" data-voucher="券一">
 					<h3 class="voucher-title">券一</h3>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1818,7 +1814,7 @@
 				<div class="voucher-card" data-voucher="券二">
 					<h3 class="voucher-title">券二</h3>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1829,7 +1825,7 @@
 				<div class="voucher-card" data-voucher="券三">
 					<h3 class="voucher-title">券三</h3>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0">無</button>
+						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1901,7 +1897,7 @@
 				<span id="chooserProgress" class="chooser-progress">0/3</span>
 			</div>
 			<div class="chooser-grid">
-				<button class="chooser-btn" type="button" data-value="0">無</button>
+				<button class="chooser-btn" type="button" data-value="0"></button>
 				<button class="chooser-btn" type="button" data-value="10">10</button>
 				<button class="chooser-btn" type="button" data-value="20">20</button>
 				<button class="chooser-btn" type="button" data-value="50">50</button>
@@ -3420,7 +3416,7 @@
 			slotList.innerHTML = values.map(function (entry, index) {
 				const slotEntry = normalizeChannelSlotEntry(entry);
 				values[index] = slotEntry;
-				return "<button class=\"channel-value-box" + (slotEntry.value === 0 ? " thank-you" : "") + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\">" + (slotEntry.value === 0 ? "謝謝參與" : slotEntry.value) + "</button>";
+				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\">" + (slotEntry.value === 0 ? "" : slotEntry.value) + "</button>";
 			}).join("") + (values.length < 3 ? getChannelAddButtonMarkup(channelName) : "");
 			updateChannelSummary(channelName);
 			updateChannelUsedState(channelName);
@@ -3451,7 +3447,7 @@
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
 			saveChannelState();
-			hint.textContent = "已為 " + channelName + " 添加 " + (value === 0 ? "無" : value) + " 券。";
+			hint.textContent = "已為 " + channelName + " 添加 " + (value === 0 ? "空白" : value) + " 券。";
 			return values.length >= 3;
 		}
 
@@ -4825,7 +4821,7 @@
 			chooserFinish.style.display = "inline-block";
 			updateChooserProgress("");
 			setChooserOptions([
-				{ value: 0, label: "無" },
+				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
 				{ value: 20, label: "20" },
 				{ value: 50, label: "50" },
@@ -4867,12 +4863,12 @@
 			chooserFinish.style.display = "inline-block";
 			updateChooserProgress(channelName);
 			setChooserOptions([
-				{ value: 200, label: "200" },
-				{ value: 100, label: "100" },
-				{ value: 50, label: "50" },
-				{ value: 20, label: "20" },
+				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
-				{ value: 0, label: "謝謝參與" }
+				{ value: 20, label: "20" },
+				{ value: 50, label: "50" },
+				{ value: 100, label: "100" },
+				{ value: 200, label: "200" },
 			]);
 			chooserBackdrop.classList.add("show");
 			editChooser.classList.add("show");
@@ -4961,12 +4957,12 @@
 			chooserFinish.style.display = "none";
 			updateChooserProgress("");
 			setChooserOptions([
-				{ value: 200, label: "200" },
-				{ value: 100, label: "100" },
-				{ value: 50, label: "50" },
-				{ value: 20, label: "20" },
+				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
-				{ value: 0, label: "謝謝參與" }
+				{ value: 20, label: "20" },
+				{ value: 50, label: "50" },
+				{ value: 100, label: "100" },
+				{ value: 200, label: "200" },
 			]);
 			chooserButtons.forEach(function (btn) {
 				btn.classList.toggle("selected", Number(btn.getAttribute("data-value")) === slotEntry.value);
