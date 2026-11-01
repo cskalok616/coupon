@@ -4249,6 +4249,10 @@
 		}
 
 		async function runFridayReset(reason) {
+			const now = new Date();
+			if (now.getDay() !== 5) {
+				return false;
+			}
 			const resetKey = getLatestFridayResetKey(new Date());
 			const marker = getLastWeeklyResetMarker();
 			if (!cloudSyncReady || !realtimeDb) {
