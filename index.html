@@ -946,6 +946,30 @@
 			gap: 6px;
 		}
 
+		.category-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 6px;
+			margin-bottom: 8px;
+		}
+
+		.category-btn {
+			min-height: 36px;
+			border: 1px solid #bfdbfe;
+			border-radius: 8px;
+			background: #eff6ff;
+			color: #1e3a8a;
+			font-size: 0.78rem;
+			font-weight: 800;
+			cursor: pointer;
+		}
+
+		.category-btn.selected {
+			border-color: #2563eb;
+			background: #2563eb;
+			color: #ffffff;
+		}
+
 		.finish-wrap {
 			display: none;
 			margin-bottom: 14px;
@@ -1303,6 +1327,7 @@
 			border-radius: 8px;
 			background: #ffffff;
 			display: flex;
+			flex-direction: column;
 			align-items: center;
 			justify-content: center;
 			font-size: 1.5rem;
@@ -1310,6 +1335,17 @@
 			color: #18476b;
 			flex: 0 0 55px;
 		}
+
+		.channel-value-box span {
+			font-size: 0.55rem;
+			line-height: 1;
+		}
+
+		.channel-value-box strong {
+			font-size: 1rem;
+			line-height: 1.15;
+		}
+
 
 		.channel-value-box.used {
 			background: #eef1f4;
@@ -1802,8 +1838,11 @@
 			<div class="voucher-grid">
 				<div class="voucher-card" data-voucher="券一">
 					<h3 class="voucher-title">券一</h3>
+					<div class="category-grid">
+						<button class="category-btn selected" type="button" data-category="滿減券">滿減券</button>
+						<button class="category-btn" type="button" data-category="禮遇券">禮遇券</button>
+					</div>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1813,8 +1852,11 @@
 				</div>
 				<div class="voucher-card" data-voucher="券二">
 					<h3 class="voucher-title">券二</h3>
+					<div class="category-grid">
+						<button class="category-btn selected" type="button" data-category="滿減券">滿減券</button>
+						<button class="category-btn" type="button" data-category="禮遇券">禮遇券</button>
+					</div>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1824,8 +1866,11 @@
 				</div>
 				<div class="voucher-card" data-voucher="券三">
 					<h3 class="voucher-title">券三</h3>
+					<div class="category-grid">
+						<button class="category-btn selected" type="button" data-category="滿減券">滿減券</button>
+						<button class="category-btn" type="button" data-category="禮遇券">禮遇券</button>
+					</div>
 					<div class="value-grid">
-						<button class="value-btn" type="button" data-value="0"></button>
 						<button class="value-btn" type="button" data-value="10">10</button>
 						<button class="value-btn" type="button" data-value="20">20</button>
 						<button class="value-btn" type="button" data-value="50">50</button>
@@ -1897,13 +1942,13 @@
 				<span id="chooserProgress" class="chooser-progress">0/3</span>
 			</div>
 			<div class="chooser-grid">
-				<button class="chooser-btn" type="button" data-value="0"></button>
 				<button class="chooser-btn" type="button" data-value="10">10</button>
 				<button class="chooser-btn" type="button" data-value="20">20</button>
 				<button class="chooser-btn" type="button" data-value="50">50</button>
 				<button class="chooser-btn" type="button" data-value="100">100</button>
 				<button class="chooser-btn" type="button" data-value="200">200</button>
-				<button class="chooser-btn" type="button" data-value="999">完成</button>
+				<button class="chooser-btn" type="button" data-value="301">滿減券</button>
+				<button class="chooser-btn" type="button" data-value="302">禮遇券</button>
 			</div>
 			<div style="margin-top: 12px; text-align: right;">
 				<button id="chooserFinish" class="chooser-finish" type="button">套用</button>
@@ -2310,6 +2355,8 @@
 		let pendingChannelAdd = "";
 		let pendingChannelAction = null;
 		let pendingChannelSummary = "";
+		let pendingChannelCategory = "滿減券";
+		let pendingChannelValue = 0;
 		let channelSelections = {};
 		let channelSelectionPeriods = {};
 		let hiddenChannelItems = {};
@@ -3294,12 +3341,14 @@
 			if (entry && typeof entry === "object") {
 				return {
 					value: Number(entry.value || 0),
-					used: Boolean(entry.used)
+					used: Boolean(entry.used),
+					category: entry.category === "禮遇券" ? "禮遇券" : "滿減券"
 				};
 			}
 			return {
 				value: Number(entry || 0),
-				used: false
+				used: false,
+				category: "滿減券"
 			};
 		}
 
@@ -3416,7 +3465,7 @@
 			slotList.innerHTML = values.map(function (entry, index) {
 				const slotEntry = normalizeChannelSlotEntry(entry);
 				values[index] = slotEntry;
-				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\">" + (slotEntry.value === 0 ? "" : slotEntry.value) + "</button>";
+				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\" title=\"" + slotEntry.category + "\"><span>" + slotEntry.category + "</span><strong>" + slotEntry.value + "</strong></button>";
 			}).join("") + (values.length < 3 ? getChannelAddButtonMarkup(channelName) : "");
 			updateChannelSummary(channelName);
 			updateChannelUsedState(channelName);
@@ -3436,18 +3485,22 @@
 			updateAllChannelSummary();
 		}
 
-		function applyChannelAddSelection(channelName, value) {
+		function applyChannelAddSelection(channelName, value, category) {
 			const values = getChannelSelectionList(channelName);
 			if (values.length >= 3) {
 				hint.textContent = channelName + " 最多只能添加 3 格。";
 				closeEditChooser();
 				return true;
 			}
-			values.push({ value: Number(value || 0), used: false });
+			values.push({
+				value: Number(value || 0),
+				used: false,
+				category: category === "禮遇券" ? "禮遇券" : "滿減券"
+			});
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
 			saveChannelState();
-			hint.textContent = "已為 " + channelName + " 添加 " + (value === 0 ? "空白" : value) + " 券。";
+			hint.textContent = "已為 " + channelName + " 添加" + (category === "禮遇券" ? "禮遇券" : "滿減券") + " " + value + "。";
 			return values.length >= 3;
 		}
 
@@ -3463,13 +3516,16 @@
 			return true;
 		}
 
-		function setChannelSlotValue(channelName, slotIndex, value) {
+		function setChannelSlotValue(channelName, slotIndex, value, category) {
 			const values = getChannelSelectionList(channelName);
 			if (slotIndex < 0 || slotIndex >= values.length) {
 				return false;
 			}
 			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
 			slotEntry.value = Number(value || 0);
+			if (category === "滿減券" || category === "禮遇券") {
+				slotEntry.category = category;
+			}
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
 			saveChannelState();
@@ -3544,6 +3600,9 @@
 				voucher1: voucher1,
 				voucher2: voucher2,
 				voucher3: voucher3,
+				voucher1Category: values[0] ? values[0].category : "滿減券",
+				voucher2Category: values[1] ? values[1].category : "滿減券",
+				voucher3Category: values[2] ? values[2].category : "滿減券",
 				voucherTotal: voucherTotal,
 				spendingTotal: voucherTotal * 3,
 				expiryDate: expiryDate,
@@ -4237,6 +4296,9 @@
 				voucher1: voucher1,
 				voucher2: voucher2,
 				voucher3: voucher3,
+				voucher1Category: slots[0] ? slots[0].category : "滿減券",
+				voucher2Category: slots[1] ? slots[1].category : "滿減券",
+				voucher3Category: slots[2] ? slots[2].category : "滿減券",
 				voucherTotal: voucherTotal,
 				spendingTotal: voucherTotal * 3,
 				expiryDate: meta.expiryDate || "-",
@@ -4762,6 +4824,8 @@
 			pendingChannelAdd = "";
 			pendingChannelAction = null;
 			pendingChannelSummary = "";
+			pendingChannelCategory = "滿減券";
+			pendingChannelValue = 0;
 			chooserFinish.textContent = "套用";
 			chooserFinish.style.display = "inline-block";
 			if (chooserProgress) {
@@ -4821,7 +4885,6 @@
 			chooserFinish.style.display = "inline-block";
 			updateChooserProgress("");
 			setChooserOptions([
-				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
 				{ value: 20, label: "20" },
 				{ value: 50, label: "50" },
@@ -4853,22 +4916,25 @@
 				return;
 			}
 			chooserGrid.classList.remove("action-menu");
-			chooserMode = "channel-add";
+			chooserMode = "channel-selection-add";
 			pendingChannelAdd = channelName;
 			editingRecordId = null;
 			editingField = "";
 			editingValue = 0;
-			chooserTitle.textContent = "為 " + channelName + " 添加券";
+			pendingChannelValue = 0;
+			pendingChannelCategory = "";
+			chooserTitle.textContent = "選擇券金額或分類";
 			chooserFinish.textContent = "完成";
-			chooserFinish.style.display = "inline-block";
+			chooserFinish.style.display = "none";
 			updateChooserProgress(channelName);
 			setChooserOptions([
-				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
 				{ value: 20, label: "20" },
 				{ value: 50, label: "50" },
 				{ value: 100, label: "100" },
 				{ value: 200, label: "200" },
+				{ value: 301, label: "滿減券" },
+				{ value: 302, label: "禮遇券" }
 			]);
 			chooserBackdrop.classList.add("show");
 			editChooser.classList.add("show");
@@ -4895,7 +4961,8 @@
 			editingRecordId = null;
 			editingField = "";
 			editingValue = 0;
-			chooserTitle.textContent = channelName + " 的券 " + (value === 0 ? "無" : value);
+			const slotCategory = getChannelSlotEntry(channelName, slotIndex).category || "滿減券";
+			chooserTitle.textContent = channelName + " 的" + slotCategory + " " + value;
 			chooserFinish.style.display = "none";
 			updateChooserProgress("");
 			setChooserOptions([
@@ -4942,7 +5009,7 @@
 		function openChannelValueEditChooser(channelName, slotIndex) {
 			const slotEntry = getChannelSlotEntry(channelName, slotIndex);
 			chooserGrid.classList.remove("action-menu");
-			chooserMode = "channel-edit-value";
+			chooserMode = "channel-selection-edit";
 			pendingChannelAdd = "";
 			pendingChannelAction = {
 				channelName: channelName,
@@ -4953,19 +5020,23 @@
 			editingRecordId = null;
 			editingField = "";
 			editingValue = slotEntry.value;
-			chooserTitle.textContent = "修改金額";
+			pendingChannelValue = slotEntry.value;
+			pendingChannelCategory = slotEntry.category || "滿減券";
+			chooserTitle.textContent = "選擇券金額或分類";
 			chooserFinish.style.display = "none";
 			updateChooserProgress("");
 			setChooserOptions([
-				{ value: 0, label: "" },
 				{ value: 10, label: "10" },
 				{ value: 20, label: "20" },
 				{ value: 50, label: "50" },
 				{ value: 100, label: "100" },
 				{ value: 200, label: "200" },
+				{ value: 301, label: "滿減券" },
+				{ value: 302, label: "禮遇券" }
 			]);
 			chooserButtons.forEach(function (btn) {
-				btn.classList.toggle("selected", Number(btn.getAttribute("data-value")) === slotEntry.value);
+				const value = Number(btn.getAttribute("data-value"));
+				btn.classList.toggle("selected", (value === slotEntry.value || (value === 301 && slotEntry.category === "滿減券") || (value === 302 && slotEntry.category === "禮遇券")));
 			});
 			chooserBackdrop.classList.add("show");
 			editChooser.classList.add("show");
@@ -5154,6 +5225,13 @@
 			}
 			return Number(selectedBtn.getAttribute("data-value")) || 0;
 		}
+
+		function getSelectedCategory(card) {
+			const selectedBtn = card.querySelector(".category-btn.selected");
+			return selectedBtn && selectedBtn.getAttribute("data-category") === "禮遇券"
+				? "禮遇券"
+				: "滿減券";
+	 }
 
 		function switchViewUser(user) {
 			currentViewUser = user;
@@ -5481,6 +5559,15 @@
 
 		voucherCards.forEach(function (card) {
 			const valueButtons = Array.from(card.querySelectorAll(".value-btn"));
+			const categoryButtons = Array.from(card.querySelectorAll(".category-btn"));
+			categoryButtons.forEach(function (categoryBtn) {
+				categoryBtn.addEventListener("click", function () {
+					categoryButtons.forEach(function (btn) {
+						btn.classList.remove("selected");
+					});
+					categoryBtn.classList.add("selected");
+				});
+			});
 			valueButtons.forEach(function (valueBtn) {
 				valueBtn.addEventListener("click", function () {
 					valueButtons.forEach(function (btn) {
@@ -5524,10 +5611,11 @@
 			const voucher2 = getSelectedValue(voucherCards[1]);
 			const voucher3 = getSelectedValue(voucherCards[2]);
 			const voucherTotal = voucher1 + voucher2 + voucher3;
-			channelSelections[currentViewUser][selectedChannel] = [voucher1, voucher2, voucher3].map(function (value) {
+			channelSelections[currentViewUser][selectedChannel] = [voucher1, voucher2, voucher3].map(function (value, index) {
 				return {
 					value: value,
-					used: false
+					used: false,
+					category: getSelectedCategory(voucherCards[index])
 				};
 			});
 			channelSelectionPeriods[currentViewUser][selectedChannel] = {
@@ -5608,8 +5696,107 @@
 					item.classList.remove("selected");
 				});
 				btn.classList.add("selected");
+				if (chooserMode === "channel-selection-add" && pendingChannelAdd) {
+					if (editingValue >= 10 && editingValue <= 200) {
+						pendingChannelValue = editingValue;
+						chooserMode = "channel-category-add";
+						chooserTitle.textContent = "選擇券分類";
+						setChooserOptions([
+							{ value: 301, label: "滿減券" },
+							{ value: 302, label: "禮遇券" }
+						]);
+					} else {
+						pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
+						chooserMode = "channel-value-add";
+						chooserTitle.textContent = pendingChannelCategory + " 金額";
+						setChooserOptions([
+							{ value: 10, label: "10" },
+							{ value: 20, label: "20" },
+							{ value: 50, label: "50" },
+							{ value: 100, label: "100" },
+							{ value: 200, label: "200" }
+						]);
+					}
+					return;
+				}
+				if (chooserMode === "channel-category-add" && pendingChannelAdd) {
+					pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
+					applyChannelAddSelection(pendingChannelAdd, pendingChannelValue, pendingChannelCategory);
+					updateChooserProgress(pendingChannelAdd);
+					if (getChannelSelectionList(pendingChannelAdd).length >= 3) {
+						closeEditChooser();
+					}
+					return;
+				}
+				if (chooserMode === "channel-value-add" && pendingChannelAdd) {
+					pendingChannelValue = editingValue;
+					applyChannelAddSelection(pendingChannelAdd, pendingChannelValue, pendingChannelCategory);
+					updateChooserProgress(pendingChannelAdd);
+					if (getChannelSelectionList(pendingChannelAdd).length >= 3) {
+						closeEditChooser();
+					}
+					return;
+				}
+				if (chooserMode === "channel-selection-edit" && pendingChannelAction) {
+					if (editingValue >= 10 && editingValue <= 200) {
+						pendingChannelValue = editingValue;
+						chooserMode = "channel-category-edit-value";
+						chooserTitle.textContent = "選擇券分類";
+						setChooserOptions([
+							{ value: 301, label: "滿減券" },
+							{ value: 302, label: "禮遇券" }
+						]);
+					} else {
+						pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
+						chooserMode = "channel-value-edit-choice";
+						chooserTitle.textContent = pendingChannelCategory + " 金額";
+						setChooserOptions([
+							{ value: 10, label: "10" },
+							{ value: 20, label: "20" },
+							{ value: 50, label: "50" },
+							{ value: 100, label: "100" },
+							{ value: 200, label: "200" }
+						]);
+					}
+					return;
+				}
+				if (chooserMode === "channel-category-edit-value" && pendingChannelAction) {
+					pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
+					setChannelSlotValue(
+						pendingChannelAction.channelName,
+						pendingChannelAction.slotIndex,
+						pendingChannelValue,
+						pendingChannelCategory
+					);
+					closeEditChooser();
+					return;
+				}
+				if (chooserMode === "channel-value-edit-choice" && pendingChannelAction) {
+					pendingChannelValue = editingValue;
+					setChannelSlotValue(
+						pendingChannelAction.channelName,
+						pendingChannelAction.slotIndex,
+						pendingChannelValue,
+						pendingChannelCategory
+					);
+					closeEditChooser();
+					return;
+				}
+				if (chooserMode === "channel-category-edit" && pendingChannelAction) {
+					pendingChannelCategory = editingValue === 2 ? "禮遇券" : "滿減券";
+					chooserMode = "channel-edit-value";
+					chooserTitle.textContent = pendingChannelCategory + " 金額";
+					setChooserOptions([
+						{ value: 10, label: "10" },
+						{ value: 20, label: "20" },
+						{ value: 50, label: "50" },
+						{ value: 100, label: "100" },
+						{ value: 200, label: "200" }
+					]);
+					return;
+				}
 				if (chooserMode === "channel-add" && pendingChannelAdd) {
-					applyChannelAddSelection(pendingChannelAdd, editingValue);
+					applyChannelAddSelection(pendingChannelAdd, editingValue, pendingChannelCategory);
 					updateChooserProgress(pendingChannelAdd);
 					if (getChannelSelectionList(pendingChannelAdd).length >= 3) {
 						closeEditChooser();
@@ -5706,7 +5893,8 @@
 					const changed = setChannelSlotValue(
 						pendingChannelAction.channelName,
 						pendingChannelAction.slotIndex,
-						editingValue
+						editingValue,
+						pendingChannelCategory
 					);
 					if (changed) {
 						hint.textContent = pendingChannelAction.channelName + " 第 " + (pendingChannelAction.slotIndex + 1) + " 格金額已改為「" + btn.textContent + "」。";
