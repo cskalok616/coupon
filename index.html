@@ -3465,8 +3465,13 @@
 			slotList.innerHTML = values.map(function (entry, index) {
 				const slotEntry = normalizeChannelSlotEntry(entry);
 				values[index] = slotEntry;
-				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\" title=\"" + slotEntry.category + "\"><span>" + slotEntry.category + "</span><strong>" + slotEntry.value + "</strong></button>";
-			}).join("") + (values.length < 3 ? getChannelAddButtonMarkup(channelName) : "");
+				if (slotEntry.value === 0) {
+					return getChannelAddButtonMarkup(channelName);
+				}
+				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\"><strong>" + slotEntry.value + "</strong></button>";
+			}).join("") + (values.length < 3 && !values.some(function (entry) {
+				return normalizeChannelSlotEntry(entry).value === 0;
+			}) ? getChannelAddButtonMarkup(channelName) : "");
 			updateChannelSummary(channelName);
 			updateChannelUsedState(channelName);
 			if (shouldUpdateAllSummary) {
@@ -3487,16 +3492,24 @@
 
 		function applyChannelAddSelection(channelName, value, category) {
 			const values = getChannelSelectionList(channelName);
-			if (values.length >= 3) {
+			const blankIndex = values.findIndex(function (entry) {
+				return normalizeChannelSlotEntry(entry).value === 0;
+			});
+			if (values.length >= 3 && blankIndex < 0) {
 				hint.textContent = channelName + " 最多只能添加 3 格。";
 				closeEditChooser();
 				return true;
 			}
-			values.push({
+			const newEntry = {
 				value: Number(value || 0),
 				used: false,
 				category: category === "禮遇券" ? "禮遇券" : "滿減券"
-			});
+			};
+			if (blankIndex >= 0 && value !== 0) {
+				values[blankIndex] = newEntry;
+			} else {
+				values.push(newEntry);
+			}
 			ensureChannelPeriodMeta(channelName);
 			renderChannelSlots(channelName);
 			saveChannelState();
@@ -4961,8 +4974,7 @@
 			editingRecordId = null;
 			editingField = "";
 			editingValue = 0;
-			const slotCategory = getChannelSlotEntry(channelName, slotIndex).category || "滿減券";
-			chooserTitle.textContent = channelName + " 的" + slotCategory + " " + value;
+			chooserTitle.textContent = channelName + " 的券 " + value;
 			chooserFinish.style.display = "none";
 			updateChooserProgress("");
 			setChooserOptions([
