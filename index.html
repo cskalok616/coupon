@@ -3360,14 +3360,37 @@
 				return {
 					value: Number(entry.value || 0),
 					used: Boolean(entry.used),
-					category: entry.category === "禮遇券" ? "禮遇券" : "滿減券"
+					category: entry.category === "禮遇券" || Number(entry.value) === 302
+						? "禮遇券"
+						: "滿減券"
 				};
 			}
 			return {
 				value: Number(entry || 0),
 				used: false,
-				category: "滿減券"
+				category: Number(entry) === 302 ? "禮遇券" : "滿減券"
 			};
+		}
+
+		function isCategoryChannelSlot(entry) {
+			const normalized = normalizeChannelSlotEntry(entry);
+			return normalized.value === 301 || normalized.value === 302;
+		}
+
+		function getChannelSlotDisplay(entry) {
+			const normalized = normalizeChannelSlotEntry(entry);
+			if (normalized.value === 301) {
+				return "滿減券";
+			}
+			if (normalized.value === 302) {
+				return "禮遇券";
+			}
+			return String(normalized.value);
+		}
+
+		function getChannelSlotAmount(entry) {
+			const normalized = normalizeChannelSlotEntry(entry);
+			return isCategoryChannelSlot(normalized) ? 0 : normalized.value;
 		}
 
 		function getChannelSlotEntry(channelName, slotIndex) {
@@ -3384,7 +3407,7 @@
 			}
 			const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
 			const total = values.reduce(function (sum, entry) {
-				return sum + (entry.used ? 0 : entry.value);
+				return sum + (entry.used ? 0 : getChannelSlotAmount(entry));
 			}, 0);
 			const totalNode = summary.querySelector('[data-summary-value="total"]');
 			const requiredNode = summary.querySelector('[data-summary-value="required"]');
@@ -3400,7 +3423,7 @@
 			const total = channelNames.reduce(function (sum, channelName) {
 				const values = getChannelSelectionList(channelName).slice(0, 3).map(normalizeChannelSlotEntry);
 				return sum + values.reduce(function (channelSum, entry) {
-					return channelSum + (entry.used ? 0 : entry.value);
+					return channelSum + (entry.used ? 0 : getChannelSlotAmount(entry));
 				}, 0);
 			}, 0);
 			if (allChannelTotalValue) {
@@ -3486,7 +3509,7 @@
 				if (slotEntry.value === 0) {
 					return getChannelAddButtonMarkup(channelName);
 				}
-				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\"><strong>" + slotEntry.value + "</strong></button>";
+				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\"><strong>" + getChannelSlotDisplay(slotEntry) + "</strong></button>";
 			}).join("") + (values.length < 3 && !values.some(function (entry) {
 				return normalizeChannelSlotEntry(entry).value === 0;
 			}) ? getChannelAddButtonMarkup(channelName) : "");
@@ -3609,9 +3632,9 @@
 			const createdDate = formatDate(now);
 			const meta = periodMeta || ensureChannelPeriodMeta(channelName);
 			const periodInfo = getPeriodInfoByDate(now);
-			const voucher1 = values[0] ? values[0].value : 0;
-			const voucher2 = values[1] ? values[1].value : 0;
-			const voucher3 = values[2] ? values[2].value : 0;
+			const voucher1 = values[0] ? getChannelSlotAmount(values[0]) : 0;
+			const voucher2 = values[1] ? getChannelSlotAmount(values[1]) : 0;
+			const voucher3 = values[2] ? getChannelSlotAmount(values[2]) : 0;
 			const voucherTotal = voucher1 + voucher2 + voucher3;
 			const phaseLabel = meta && meta.phaseLabel ? meta.phaseLabel : (periodInfo ? periodInfo.label : "-");
 			const phaseStartDate = meta && meta.phaseStartDate
@@ -4312,9 +4335,9 @@
 			if (!slots.length) {
 				return null;
 			}
-			const voucher1 = slots[0] ? normalizeNumber(slots[0].value) : 0;
-			const voucher2 = slots[1] ? normalizeNumber(slots[1].value) : 0;
-			const voucher3 = slots[2] ? normalizeNumber(slots[2].value) : 0;
+			const voucher1 = slots[0] ? getChannelSlotAmount(slots[0]) : 0;
+			const voucher2 = slots[1] ? getChannelSlotAmount(slots[1]) : 0;
+			const voucher3 = slots[2] ? getChannelSlotAmount(slots[2]) : 0;
 			const voucherTotal = voucher1 + voucher2 + voucher3;
 			const meta = periodMeta && typeof periodMeta === "object" ? periodMeta : {};
 			return {
@@ -5737,7 +5760,7 @@
 						pendingChannelCategory = "滿減券";
 					} else {
 						pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
-						pendingChannelValue = 0;
+						pendingChannelValue = editingValue;
 					}
 					applyChannelAddSelection(pendingChannelAdd, pendingChannelValue, pendingChannelCategory);
 					updateChooserProgress(pendingChannelAdd);
@@ -5762,6 +5785,7 @@
 						pendingChannelValue = editingValue;
 					} else {
 						pendingChannelCategory = editingValue === 302 ? "禮遇券" : "滿減券";
+						pendingChannelValue = editingValue;
 					}
 					setChannelSlotValue(
 						pendingChannelAction.channelName,
