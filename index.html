@@ -1360,6 +1360,10 @@
 			line-height: 1;
 		}
 
+		.channel-value-box.category-slot strong {
+			font-size: 1rem;
+		}
+
 
 		.channel-value-box.used {
 			background: #eef1f4;
@@ -3509,7 +3513,8 @@
 				if (slotEntry.value === 0) {
 					return getChannelAddButtonMarkup(channelName);
 				}
-				return "<button class=\"channel-value-box" + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\"><strong>" + getChannelSlotDisplay(slotEntry) + "</strong></button>";
+				const categoryClass = isCategoryChannelSlot(slotEntry) ? " category-slot" : "";
+				return "<button class=\"channel-value-box" + categoryClass + (slotEntry.used ? " used" : "") + "\" type=\"button\" data-channel=\"" + channelName + "\" data-slot-index=\"" + index + "\" data-slot-value=\"" + slotEntry.value + "\" data-slot-used=\"" + (slotEntry.used ? "1" : "0") + "\"><strong>" + getChannelSlotDisplay(slotEntry) + "</strong></button>";
 			}).join("") + (values.length < 3 && !values.some(function (entry) {
 				return normalizeChannelSlotEntry(entry).value === 0;
 			}) ? getChannelAddButtonMarkup(channelName) : "");
