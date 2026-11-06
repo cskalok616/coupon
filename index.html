@@ -4923,7 +4923,9 @@
 				chooserProgress.classList.remove("show");
 				return;
 			}
-			const count = Math.min(getChannelSelectionList(channelName).length, 3);
+			const count = Math.min(getChannelSelectionList(channelName).filter(function (entry) {
+				return normalizeChannelSlotEntry(entry).value !== 0;
+			}).length, 3);
 			chooserProgress.textContent = count + "/3";
 			chooserProgress.classList.add("show");
 		}
